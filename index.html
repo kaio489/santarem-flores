@@ -819,7 +819,7 @@ html:not(.js-ready) .reveal { animation: reveal-fallback .01s 3s forwards; }
         <li class="step-card">
           <span class="step-card__icon"><svg class="icon" aria-hidden="true"><use href="#i-message-circle-heart"/></svg></span>
           <h3>Toque em Quero esse</h3>
-          <p>O WhatsApp abre com uma mensagem pronta, já com o nome do buquê que você escolheu.</p>
+          <p>Preencha os dados, escolha a data e a hora, e o pedido chega direto para a loja.</p>
         </li>
         <li class="step-card">
           <span class="step-card__icon"><svg class="icon" aria-hidden="true"><use href="#i-sparkles"/></svg></span>
@@ -1605,460 +1605,89 @@ window.SF_SEED_PRODUCTS = [
 
 </script>
 <script>
-/* =====================================================================
-   SANTARÉM FLORES — pedido pelo botão "Quero esse"
-   1) cliente informa o nome e escolhe Retirar na loja ou Mandar entregar
-   2) se for entregar: endereço, texto para ser escrito à mão e, se quiser,
-      uma exigência especial
-   3) "Enviar pedido" gera uma IMAGEM com a identidade da Santarém Flores
-      (logo, cores, foto e dados do pedido) e leva ao WhatsApp da floricultura.
-   Sem <form>: tudo funciona por clique/Enter, inclusive em visualizadores que
-   bloqueiam envio de formulário.
-   Observação técnica: o WhatsApp não deixa um site anexar imagem sozinho.
-   O texto do pedido vai pronto na conversa do número da loja; a foto é
-   copiada para colar, e pode ser compartilhada ou baixada.
-   ===================================================================== */
+/* Pedido pelo botão "Quero esse": grava direto no sistema interno (sem WhatsApp). */
 (() => {
   'use strict';
-  const SF = window.SF;
-  if (!SF) return;
-  const { $, esc, BRL, plainName, waLink, phoneLabel, store } = SF;
-  const dlg = $('#order');
-  const inner = $('#order-inner');
-  const NAME_KEY = 'sf:customer-name';
-  let cur = null; // { p, values, imgUrl, blob, code, photoUrl }
-  const ORDER_BUCKET = (SF.CFG.ORDER_IMAGE_BUCKET || 'order-images');
-  const canHost = () => !!(SF.CFG.SUPABASE_URL && SF.CFG.SUPABASE_ANON_KEY && SF.CFG.ORDER_IMAGE_UPLOAD !== false);
+  const SF = window.SF; if (!SF) return;
+  const { $, esc, BRL, plainName, store } = SF;
+  const dlg = $('#order'), inner = $('#order-inner'), NAME_KEY = 'sf:customer-name';
+  let cur = null;
+  const pad = (n) => String(n).padStart(2, '0');
+  const minDT = () => { const d = new Date(Math.ceil((Date.now() + 3600000) / 60000) * 60000); return d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate()) + 'T' + pad(d.getHours()) + ':' + pad(d.getMinutes()); };
+  const fmt = (s) => new Date(s).toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' });
 
-  // Sobe a foto do pedido para o Supabase Storage (link público, nome impossível de adivinhar).
-  // O link vai escrito na mensagem do WhatsApp: assim a foto viaja junto, direto para o número da loja.
-  async function hostImage(blob) {
-    const base = String(SF.CFG.SUPABASE_URL).replace(/\/+$/, '');
-    const key = SF.CFG.SUPABASE_ANON_KEY;
-    const id = Array.from(crypto.getRandomValues(new Uint8Array(16)), (b) => b.toString(16).padStart(2, '0')).join('');
-    const path = `pedidos/${id}.png`;
-    const headers = { apikey: key, 'Content-Type': 'image/png', 'x-upsert': 'false', 'cache-control': 'max-age=31536000' };
-    if (key.split('.').length === 3) headers.Authorization = 'Bearer ' + key;
-    const res = await fetch(`${base}/storage/v1/object/${ORDER_BUCKET}/${path}`, { method: 'POST', headers, body: blob });
-    if (!res.ok) throw new Error('upload ' + res.status);
-    return `${base}/storage/v1/object/public/${ORDER_BUCKET}/${path}`;
-  }
-
-  /* ---------- abrir ---------- */
   SF.openOrder = (id) => {
-    const p = SF.getProduct(id);
-    if (!p) return;
-    const detail = $('#detail');
-    if (detail.open) detail.close();
-    cur = { p, values: { name: store.get(NAME_KEY) || '', mode: '', address: '', note: '', special: '', specialOpen: false } };
-    renderForm();
-    if (!dlg.open) dlg.showModal();
+    const p = SF.getProduct(id); if (!p) return;
+    const detail = $('#detail'); if (detail.open) detail.close();
+    cur = { p, name: store.get(NAME_KEY) || '' };
+    renderForm(); if (!dlg.open) dlg.showModal();
     setTimeout(() => { const f = $('#of-name'); if (f) f.focus(); }, 60);
   };
 
-  /* ---------- formulário ---------- */
   function renderForm() {
-    const { p, values: v } = cur;
-    const label = esc(plainName(p.name));
+    const { p } = cur, label = esc(plainName(p.name));
     inner.innerHTML = `
       <button class="detail__close" type="button" data-act="close" aria-label="Fechar"><svg class="icon" aria-hidden="true"><use href="#i-x"/></svg></button>
       <div class="of" id="of" role="group" aria-labelledby="order-title">
-        <div class="of__product">
-          <img src="${esc(p.image)}" alt="${label}" width="96" height="128">
-          <div>
-            <h2 class="of__title" id="order-title">Seu pedido</h2>
-            <p class="of__name">${esc(p.name)}</p>
-            ${p.price != null ? `<p class="of__price">${BRL.format(p.price)}</p>` : '<p class="of__price of__price--ask">Consulte o valor</p>'}
-          </div>
+        <div class="of__product"><img src="${esc(p.image)}" alt="${label}" width="96" height="128"><div>
+          <h2 class="of__title" id="order-title">Seu pedido</h2><p class="of__name">${esc(p.name)}</p>
+          ${p.price != null ? `<p class="of__price">${BRL.format(p.price)}</p>` : '<p class="of__price of__price--ask">Consulte o valor</p>'}</div></div>
+        <label class="of__field"><span>Seu nome</span><input id="of-name" name="name" type="text" autocomplete="name" maxlength="80" value="${esc(cur.name)}"></label>
+        <label class="of__field"><span>Seu telefone (WhatsApp)</span><input name="phone" type="tel" autocomplete="tel" maxlength="20" placeholder="(93) 9 0000-0000"></label>
+        <fieldset class="of__choice"><legend>Como você quer receber?</legend><div class="of__toggle">
+          <label><input type="radio" name="mode" value="pickup"><span>Retirar na loja</span></label>
+          <label><input type="radio" name="mode" value="delivery"><span>Mandar entregar</span></label></div></fieldset>
+        <label class="of__field"><span id="of-dtl">Data e hora (mínimo 1 hora a partir de agora)</span><input name="dt" type="datetime-local" min="${minDT()}"></label>
+        <div class="of__delivery" id="of-delivery" hidden>
+          <label class="of__field"><span><input type="checkbox" name="anon"> Enviar de forma anônima (o entregador não verá o seu nome)</span></label>
+          <label class="of__field"><span>Nome de quem vai receber</span><input name="rn" type="text" maxlength="80"></label>
+          <label class="of__field"><span>Telefone de quem vai receber</span><input name="rt" type="tel" maxlength="20"></label>
+          <label class="of__field"><span>Endereço de entrega</span><textarea name="address" rows="3" maxlength="220" placeholder="Rua, número, bairro e ponto de referência"></textarea></label>
+          <label class="of__field"><span>Texto para ser escrito à mão</span><textarea class="of__hand" name="note" rows="3" maxlength="180" placeholder="Ex.: Feliz aniversário, meu amor!"></textarea></label>
+          <label class="of__field"><span>Exigência especial (opcional)</span><textarea name="special" rows="2" maxlength="240" placeholder="Cor, horário ou detalhe do buquê"></textarea></label>
         </div>
-
-        <label class="of__field">
-          <span>Seu nome</span>
-          <input id="of-name" name="name" type="text" autocomplete="name" maxlength="80" value="${esc(v.name)}" placeholder="Como devemos te chamar?">
-        </label>
-
-        <fieldset class="of__choice">
-          <legend>Como você quer receber?</legend>
-          <div class="of__toggle">
-            <label><input type="radio" name="mode" value="pickup" ${v.mode === 'pickup' ? 'checked' : ''}><span>Retirar na loja</span></label>
-            <label><input type="radio" name="mode" value="delivery" ${v.mode === 'delivery' ? 'checked' : ''}><span>Mandar entregar</span></label>
-          </div>
-        </fieldset>
-
-        <div class="of__delivery" id="of-delivery" ${v.mode === 'delivery' ? '' : 'hidden'}>
-          <label class="of__field">
-            <span>Endereço de entrega</span>
-            <textarea id="of-address" name="address" rows="3" maxlength="220" placeholder="Rua, número, bairro e ponto de referência">${esc(v.address)}</textarea>
-          </label>
-          <label class="of__field">
-            <span>Texto para ser escrito à mão</span>
-            <textarea id="of-note" class="of__hand" name="note" rows="3" maxlength="180" placeholder="Ex.: Feliz aniversário, meu amor!">${esc(v.note)}</textarea>
-          </label>
-          <button class="of__special-btn" id="of-special-btn" type="button" aria-expanded="${v.specialOpen}" aria-controls="of-special">
-            <svg class="icon" aria-hidden="true"><use href="#i-sparkles"/></svg><span>Tenho uma exigência especial</span>
-          </button>
-          <label class="of__field" id="of-special" ${v.specialOpen ? '' : 'hidden'}>
-            <span>Qual é a exigência especial?</span>
-            <textarea name="special" rows="3" maxlength="240" placeholder="Conte o que você precisa, como cor, horário ou detalhe do buquê">${esc(v.special)}</textarea>
-          </label>
-        </div>
-
         <p class="of__error" id="of-error" role="alert" hidden></p>
-        <button class="btn btn--brown btn--block" type="button" id="of-submit" data-act="submit">Enviar pedido</button>
+        <button class="btn btn--brown btn--block" type="button" data-act="submit">Enviar pedido</button>
       </div>`;
-  }
-
-  function readValues() {
-    const g = (sel) => { const el = $('#of ' + sel); return el ? String(el.value || '').trim() : ''; };
-    const mode = $('#of input[name="mode"]:checked');
-    const sp = $('#of-special-btn');
-    cur.values = {
-      name: g('[name="name"]'),
-      mode: mode ? mode.value : '',
-      address: g('[name="address"]'),
-      note: g('[name="note"]'),
-      special: g('[name="special"]'),
-      specialOpen: sp ? sp.getAttribute('aria-expanded') === 'true' : false
-    };
-    return cur.values;
   }
 
   inner.addEventListener('change', (e) => {
-    if (e.target.name === 'mode') $('#of-delivery').hidden = e.target.value !== 'delivery';
-  });
-  inner.addEventListener('keydown', (e) => {
-    if (e.key === 'Enter' && e.target.matches('#of input[type="text"]')) { e.preventDefault(); submitOrder(); }
+    if (e.target.name === 'mode') { $('#of-delivery').hidden = e.target.value !== 'delivery'; $('#of-dtl').textContent = (e.target.value === 'delivery' ? 'Data e hora da entrega' : 'Data e hora da retirada') + ' (mínimo 1 hora a partir de agora)'; }
   });
   inner.addEventListener('click', (e) => {
-    const sp = e.target.closest('#of-special-btn');
-    if (sp) {
-      const open = sp.getAttribute('aria-expanded') !== 'true';
-      sp.setAttribute('aria-expanded', String(open));
-      $('#of-special').hidden = !open;
-      if (open) $('#of-special textarea').focus();
-      return;
-    }
-    const act = e.target.closest('[data-act]');
-    if (!act) return;
-    const a = act.dataset.act;
-    if (a === 'close') dlg.close();
-    else if (a === 'back') { cleanup(); renderForm(); }
-    else if (a === 'submit') submitOrder();
-    else if (a === 'send') { if (!cur.photoUrl) copyImage(true); } // o link do WhatsApp abre normalmente; sem foto hospedada, ela é copiada ao mesmo tempo
-    else if (a === 'copy') copyImage(false);
-    else if (a === 'share') shareImage();
+    const a = e.target.closest('[data-act]'); if (!a) return;
+    if (a.dataset.act === 'close') dlg.close(); else if (a.dataset.act === 'submit') submitOrder();
   });
 
-  const withTimeout = (promise, ms, label) => Promise.race([promise, new Promise((_, rej) => setTimeout(() => rej(new Error('tempo esgotado: ' + label)), ms))]);
-
   async function submitOrder() {
-    if (!cur || cur.busy) return;
-    const v = readValues();
-    const err = $('#of-error');
-    err.hidden = true;
-    const fail = (msg, sel) => { err.textContent = msg; err.hidden = false; const el = sel && $(sel); if (el) el.focus(); };
-    if (!v.name) return fail('Informe o seu nome.', '#of-name');
-    if (!v.mode) return fail('Escolha se vai retirar na loja ou mandar entregar.');
-    if (v.mode === 'delivery' && !v.address) return fail('Informe o endereço de entrega.', '#of-address');
-    try { store.set(NAME_KEY, v.name); } catch (_) { /* ignora */ }
-
-    const btn = $('#of-submit');
-    cur.busy = true;
-    btn.disabled = true;
-    btn.textContent = 'Gerando a foto do seu pedido…';
+    const g = (n) => { const el = $('#of [name="' + n + '"]'); return el ? String(el.value || '').trim() : ''; };
+    const m = $('#of input[name="mode"]:checked'), mode = m ? m.value : '', del = mode === 'delivery';
+    const v = { name: g('name'), phone: g('phone'), dt: g('dt'), rn: g('rn'), rt: g('rt'), address: g('address'), note: g('note'), special: g('special'), anon: del && !!$('#of [name="anon"]:checked') };
+    const err = $('#of-error'); err.hidden = true;
+    const fail = (t) => { err.textContent = t; err.hidden = false; };
+    if (!v.name) return fail('Informe o seu nome.');
+    if (v.phone.replace(/\D/g, '').length < 10) return fail('Informe seu telefone com DDD.');
+    if (!mode) return fail('Escolha se vai retirar na loja ou mandar entregar.');
+    if (!v.dt) return fail('Escolha a data e a hora.');
+    if (new Date(v.dt) < new Date(minDT())) return fail('Escolha um horário a partir de ' + fmt(minDT()) + ' (mínimo 1 hora de antecedência).');
+    if (del && !v.rn) return fail('Informe o nome de quem vai receber.');
+    if (del && v.rt.replace(/\D/g, '').length < 10) return fail('Informe o telefone de quem vai receber, com DDD.');
+    if (del && !v.address) return fail('Informe o endereço de entrega.');
+    const btn = $('#of [data-act="submit"]'); btn.disabled = true; btn.textContent = 'Enviando…';
     try {
-      cur.code = 'SF-' + Date.now().toString(36).slice(-4).toUpperCase();
-      cur.blob = await withTimeout(makeImage(cur.p, v, cur.code), 12000, 'imagem');
-      cur.photoUrl = '';
-      if (canHost()) {
-        btn.textContent = 'Enviando a foto…';
-        try { cur.photoUrl = await withTimeout(hostImage(cur.blob), 10000, 'envio da foto'); } catch (e) { console.warn('[pedido] não foi possível hospedar a foto; a mensagem vai sem o link', e); }
-      }
-      cur.imgUrl = await new Promise((res, rej) => { const fr = new FileReader(); fr.onload = () => res(fr.result); fr.onerror = rej; fr.readAsDataURL(cur.blob); }); // data: funciona em qualquer visualizador
-      cur.busy = false;
-      renderDone();
-    } catch (ex) {
-      console.error('[pedido]', ex);
-      cur.busy = false;
-      btn.disabled = false;
-      btn.textContent = 'Enviar pedido';
-      fail('Não foi possível gerar a foto agora. Você pode enviar o pedido em texto pelo WhatsApp:');
-      renderFallbackLink();
-    }
-  }
-
-  function renderFallbackLink() {
-    if ($('#of-fallback')) return;
-    const a = document.createElement('a');
-    a.id = 'of-fallback';
-    a.href = waLink(buildText(cur.p, cur.values, cur.code || ''));
-    a.target = '_blank'; a.rel = 'noopener noreferrer';
-    a.className = 'btn btn--line btn--block';
-    a.textContent = 'Enviar só o texto pelo WhatsApp';
-    $('#of-error').after(a);
-  }
-
-  /* ---------- texto do WhatsApp ---------- */
-  function buildText(p, v, code) {
-    const interest = p.price != null
-      ? `Vim pelo site da Santarém Flores e me encantei com o ${p.name}. Gostaria de fazer meu pedido no valor de ${BRL.format(p.price)}. 💐`
-      : `Vim pelo site da Santarém Flores e me encantei com o ${p.name}. Gostaria de fazer meu pedido (consulte o valor). 💐`;
-    const L = [
-      'Olá! 🌷 Tudo bem?',
-      interest,
-      '',
-      `Nome: ${v.name}`,
-      `Recebimento: ${v.mode === 'delivery' ? 'Mandar entregar' : 'Retirar na loja'}`
-    ];
-    if (v.mode === 'delivery') {
-      L.push(`Endereço: ${v.address}`);
-      if (v.note) L.push(`Mensagem para escrever à mão: ${v.note}`);
-      if (v.special) L.push(`Exigência especial: ${v.special}`);
-    }
-    if (cur && cur.photoUrl) L.push(`Foto do pedido: ${cur.photoUrl}`);
-    L.push('', 'Muito obrigado pelo atendimento! ❤️ Estou ansioso(a) para receber meu pedido e deixar esse momento ainda mais especial. ✨');
-    return L.join('\n');
-  }
-
-  /* ---------- etapa final: foto pronta ---------- */
-  function renderDone() {
-    const { p, values: v } = cur;
-    let canShare = false;
-    try { canShare = !!(navigator.canShare && navigator.canShare({ files: [new File([cur.blob], 'pedido.png', { type: 'image/png' })] })); } catch (_) { /* ignora */ }
-    const canCopy = !!(navigator.clipboard && window.ClipboardItem);
-    const hosted = !!cur.photoUrl;
-    const wa = esc(waLink(buildText(p, v, cur.code)));
-    let lead, primary, hint;
-    if (hosted) {
-      lead = 'Tudo pronto! Ao tocar em <strong>Enviar pedido</strong>, a conversa da Santarém Flores abre com todos os dados e o <strong>link da foto do pedido</strong>. É só enviar.';
-      primary = `<a class="btn btn--brown btn--block" data-act="send" href="${wa}" target="_blank" rel="noopener noreferrer">Enviar pedido pelo WhatsApp</a>`;
-      hint = 'A foto vai junto no link da mensagem (o WhatsApp mostra a prévia). Se preferir mandar o arquivo, use Compartilhar, Copiar ou Baixar.';
-    } else if (canShare) {
-      lead = 'Toque em <strong>Enviar pedido com a foto</strong>, escolha o WhatsApp e a conversa da Santarém Flores: a foto e o texto vão juntos.';
-      primary = `<button class="btn btn--brown btn--block" type="button" data-act="share">Enviar pedido com a foto</button>
-        <a class="btn btn--line btn--block" data-act="send" href="${wa}" target="_blank" rel="noopener noreferrer">Abrir só a conversa da loja (texto)</a>`;
-      hint = 'O WhatsApp não permite escolher a conversa automaticamente ao compartilhar. Se preferir, abra a conversa da loja pelo botão acima e envie a foto depois.';
-    } else {
-      lead = 'Esta é a foto do seu pedido, com a identidade da Santarém Flores. Toque em <strong>Abrir WhatsApp</strong> para falar com a loja e envie a foto junto.';
-      primary = `<a class="btn btn--brown btn--block" data-act="send" href="${wa}" target="_blank" rel="noopener noreferrer">Abrir WhatsApp da Santarém Flores</a>`;
-      hint = 'A conversa abre com todos os dados do pedido escritos. Para enviar a foto, cole a foto copiada (Ctrl+V no computador; no celular, segure no campo de mensagem e escolha Colar) ou anexe a foto baixada.';
-    }
-    inner.innerHTML = `
-      <button class="detail__close" type="button" data-act="close" aria-label="Fechar"><svg class="icon" aria-hidden="true"><use href="#i-x"/></svg></button>
-      <div class="of of--done">
-        <h2 class="of__title" id="order-title">Pedido pronto</h2>
-        <p class="of__lead">${lead}</p>
-        ${primary}
-        <div class="of__row">
-          ${canShare && hosted ? '<button class="btn btn--line" type="button" data-act="share">Compartilhar foto</button>' : ''}
-          ${canCopy ? '<button class="btn btn--line" type="button" data-act="copy">Copiar foto</button>' : ''}
-          <a class="btn btn--line" href="${cur.imgUrl}" download="pedido-santarem-flores-${esc(cur.code)}.png">Baixar foto</a>
-        </div>
-        <p class="of__hint" id="of-hint" role="status">${hint}</p>
-        <img class="of__img" src="${cur.imgUrl}" alt="Foto do pedido de ${esc(v.name)}: ${esc(plainName(p.name))}">
-        <button class="detail__later" type="button" data-act="back">Voltar e alterar o pedido</button>
-      </div>`;
-  }
-
-  async function copyImage(silentOk) {
-    const hint = $('#of-hint');
-    try {
-      await navigator.clipboard.write([new ClipboardItem({ 'image/png': cur.blob })]);
-      if (hint) hint.innerHTML = '<strong>Foto copiada.</strong> No WhatsApp, cole na conversa (Ctrl+V no computador; no celular, segure no campo de mensagem e escolha Colar) e envie junto com o texto.';
-    } catch (err) {
-      if (!silentOk && hint) hint.textContent = 'Não foi possível copiar. Use Compartilhar foto ou Baixar foto e anexe no WhatsApp.';
-    }
-  }
-
-  async function shareImage() {
-    try {
-      const file = new File([cur.blob], `pedido-santarem-flores-${cur.code}.png`, { type: 'image/png' });
-      await navigator.share({ files: [file], title: 'Pedido Santarém Flores', text: buildText(cur.p, cur.values, cur.code) });
-    } catch (err) {
-      if (err && err.name !== 'AbortError') console.warn('[pedido] compartilhar', err);
-    }
-  }
-
-  function cleanup() {
-    if (cur) { cur.imgUrl = null; cur.blob = null; cur.busy = false; }
-  }
-  dlg.addEventListener('close', cleanup);
-
-  /* ---------- imagem do pedido (canvas) ---------- */
-  const COLORS = { brown: '#351e16', yellow: '#fbf10b', cream: '#fbf8f1', soft: '#6a5347', band: '#fbf4b8', photo: '#efe8da' };
-
-  function loadImg(src) {
-    return new Promise((resolve) => {
-      if (!src) return resolve(null);
-      const img = new Image();
-      try {
-        const u = new URL(src, location.href);
-        if (/^https?:$/.test(u.protocol) && u.origin !== location.origin) img.crossOrigin = 'anonymous';
-      } catch (_) { /* ignora */ }
-      img.onload = () => resolve(img);
-      img.onerror = () => resolve(null);
-      setTimeout(() => resolve(null), 5000);
-      img.src = src;
-    });
-  }
-
-  async function makeImage(p, v, code) {
-    try {
-      await withTimeout(Promise.all([
-        document.fonts.load('300 56px Jost', 'Aa'), document.fonts.load('400 32px Jost', 'Aa'),
-        document.fonts.load('500 30px Jost', 'Aa'), document.fonts.load('600 64px Caveat', 'Aa')
-      ]), 2500, 'fontes');
-    } catch (_) { /* usa a fonte de reserva */ }
-    const logoEl = $('.brand img');
-    const [photo, logo] = await Promise.all([loadImg(p.image), loadImg(logoEl ? (logoEl.currentSrc || logoEl.src) : '')]);
-    try {
-      return await drawToBlob(p, v, code, photo, logo);
-    } catch (err) {
-      console.warn('[pedido] foto bloqueada pelo navegador; gerando sem ela', err);
-      return drawToBlob(p, v, code, null, logo);
-    }
-  }
-
-  function drawToBlob(p, v, code, photo, logo) {
-    const W = 1080;
-    const probe = document.createElement('canvas').getContext('2d');
-    const bottom = paint(probe, W, 0, { p, v, code, photo, logo }, true);
-    const H = Math.max(1350, bottom + 60 + 210);
-    const canvas = document.createElement('canvas');
-    canvas.width = W; canvas.height = H;
-    paint(canvas.getContext('2d'), W, H, { p, v, code, photo, logo }, false);
-    return new Promise((resolve, reject) => canvas.toBlob((b) => (b ? resolve(b) : reject(new Error('toBlob'))), 'image/png'));
-  }
-
-  function wrap(ctx, text, x, y, maxW, lineH, dry) {
-    const paragraphs = String(text).split(/\n/);
-    for (const para of paragraphs) {
-      const words = para.split(/\s+/).filter(Boolean);
-      let line = '';
-      for (const w of words) {
-        const test = line ? line + ' ' + w : w;
-        if (ctx.measureText(test).width > maxW && line) {
-          if (!dry) ctx.fillText(line, x, y);
-          y += lineH; line = w;
-        } else line = test;
-      }
-      if (!dry) ctx.fillText(line, x, y);
-      y += lineH;
-    }
-    return y;
-  }
-
-  function paint(ctx, W, H, D, dry) {
-    const { p, v, code, photo, logo } = D;
-    const C = COLORS, M = 70, BODY = W - 2 * M;
-    const setSpacing = (px) => { if ('letterSpacing' in ctx) ctx.letterSpacing = px + 'px'; };
-    ctx.textBaseline = 'alphabetic';
-
-    if (!dry) {
-      ctx.fillStyle = C.cream; ctx.fillRect(0, 0, W, H);
-      ctx.fillStyle = C.brown; ctx.fillRect(0, 0, W, 230);
-      ctx.fillStyle = C.yellow; ctx.fillRect(0, 230, W, 10);
-      ctx.save(); ctx.beginPath(); ctx.arc(M + 75, 115, 75, 0, Math.PI * 2); ctx.closePath(); ctx.clip();
-      ctx.fillStyle = C.yellow; ctx.fillRect(M, 40, 150, 150);
-      if (logo) ctx.drawImage(logo, M, 40, 150, 150);
-      ctx.restore();
-      ctx.fillStyle = C.yellow; ctx.font = '500 26px Jost, sans-serif'; setSpacing(7);
-      ctx.fillText('PEDIDO DE BUQUÊ', M + 190, 92); setSpacing(0);
-      ctx.fillStyle = C.cream; ctx.font = '300 68px Jost, sans-serif';
-      ctx.fillText('Santarém Flores', M + 190, 160);
-      ctx.fillStyle = 'rgba(251,248,241,.78)'; ctx.font = '400 26px Jost, sans-serif';
-      const when = new Date().toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' });
-      ctx.fillText(`${when}   ·   ${code}`, M + 190, 205);
-    }
-
-    // produto: foto + nome/preço
-    let y = 290;
-    const PW = 420, PH = 540;
-    if (!dry) {
-      ctx.fillStyle = C.photo; ctx.fillRect(M, y, PW, PH);
-      if (photo) {
-        const s = Math.max(PW / photo.width, PH / photo.height);
-        const dw = photo.width * s, dh = photo.height * s;
-        ctx.save(); ctx.beginPath(); ctx.rect(M, y, PW, PH); ctx.clip();
-        ctx.drawImage(photo, M + (PW - dw) / 2, y + (PH - dh) * 0.42, dw, dh);
-        ctx.restore();
-      }
-      ctx.strokeStyle = C.brown; ctx.lineWidth = 6; ctx.strokeRect(M, y, PW, PH);
-    }
-    const x2 = M + PW + 50, w2 = W - M - x2;
-    let yy = y + 50;
-    ctx.fillStyle = C.brown; ctx.font = '300 54px Jost, sans-serif';
-    yy = wrap(ctx, p.name, x2, yy, w2, 64, dry);
-    yy += 6;
-    ctx.font = '500 46px Jost, sans-serif';
-    if (!dry) ctx.fillText(p.price != null ? BRL.format(p.price) : 'Consulte o valor', x2, yy);
-    yy += 56;
-    ctx.fillStyle = C.soft; ctx.font = '300 30px Jost, sans-serif';
-    if (p.description) yy = wrap(ctx, p.description, x2, yy, w2, 40, dry);
-    if (p.observation) yy = wrap(ctx, p.observation, x2, yy + 6, w2, 40, dry);
-    y = Math.max(y + PH, yy) + 56;
-
-    const label = (text) => {
-      ctx.fillStyle = C.soft; ctx.font = '500 24px Jost, sans-serif'; setSpacing(4);
-      if (!dry) ctx.fillText(text, M, y); setSpacing(0); y += 44;
-    };
-    const value = (text) => {
-      ctx.fillStyle = C.brown; ctx.font = '400 40px Jost, sans-serif';
-      y = wrap(ctx, text, M, y, BODY, 52, dry) + 22;
-    };
-    const rule = () => { if (!dry) { ctx.fillStyle = 'rgba(53,30,22,.14)'; ctx.fillRect(M, y - 6, BODY, 2); } y += 30; };
-
-    label('CLIENTE'); value(v.name); rule();
-    label('RECEBIMENTO'); value(v.mode === 'delivery' ? 'Mandar entregar' : 'Retirar na loja');
-
-    if (v.mode === 'delivery') {
-      rule(); label('ENDEREÇO DE ENTREGA'); value(v.address);
-      if (v.note) {
-        rule(); label('TEXTO PARA SER ESCRITO À MÃO');
-        ctx.font = '600 64px Caveat, "Segoe Script", cursive';
-        const lines = (() => { let c = 0; const words = v.note.split(/\s+/); let line = ''; for (const w of words) { const t = line ? line + ' ' + w : w; if (ctx.measureText(t).width > BODY - 80 && line) { c++; line = w; } else line = t; } return c + 1; })();
-        const boxH = lines * 74 + 70;
-        if (!dry) {
-          ctx.fillStyle = '#fff'; ctx.fillRect(M, y - 10, BODY, boxH);
-          ctx.setLineDash([14, 10]); ctx.strokeStyle = C.brown; ctx.lineWidth = 3; ctx.strokeRect(M + 1.5, y - 8.5, BODY - 3, boxH - 3); ctx.setLineDash([]);
-          ctx.fillStyle = C.brown; ctx.font = '600 64px Caveat, "Segoe Script", cursive';
-        }
-        wrap(ctx, v.note, M + 40, y + 62, BODY - 80, 74, dry);
-        y += boxH + 16;
-      }
-      if (v.special) {
-        rule(); label('EXIGÊNCIA ESPECIAL');
-        ctx.font = '400 38px Jost, sans-serif';
-        const startY = y;
-        const endY = wrap(ctx, v.special, M + 34, y + 6, BODY - 34, 50, true);
-        if (!dry) {
-          ctx.fillStyle = C.band; ctx.fillRect(M, startY - 34, BODY, endY - startY + 26);
-          ctx.fillStyle = C.yellow; ctx.fillRect(M, startY - 34, 12, endY - startY + 26);
-          ctx.fillStyle = C.brown; ctx.font = '400 38px Jost, sans-serif';
-        }
-        y = wrap(ctx, v.special, M + 34, y + 6, BODY - 34, 50, dry) + 20;
-      }
-    }
-
-    if (!dry) {
-      const fy = H - 210;
-      ctx.fillStyle = C.band; ctx.fillRect(0, fy, W, 210);
-      ctx.fillStyle = C.brown; ctx.fillRect(0, fy, W, 6);
-      ctx.fillStyle = C.brown; ctx.font = '300 50px Jost, sans-serif';
-      ctx.fillText('Santarém Flores', M, fy + 84);
-      ctx.font = '400 27px Jost, sans-serif'; ctx.fillStyle = C.soft;
-      ctx.fillText('Flores naturais, buquês e presentes especiais', M, fy + 128);
-      const phone = phoneLabel();
-      ctx.fillText('@santarem_flores' + (phone ? '   ·   ' + phone : ''), M, fy + 168);
-      ctx.save(); ctx.beginPath(); ctx.arc(W - M - 68, fy + 108, 68, 0, Math.PI * 2); ctx.closePath(); ctx.clip();
-      ctx.fillStyle = C.yellow; ctx.fillRect(W - M - 136, fy + 40, 136, 136);
-      if (logo) ctx.drawImage(logo, W - M - 136, fy + 40, 136, 136);
-      ctx.restore();
-    }
-    return y;
+      const p = cur.p, res = await fetch('https://uuzdbfizpozdacygnzkj.supabase.co/rest/v1/rpc/sf_criar_pedido', { method: 'POST', headers: { apikey: 'sb_publishable_8f8lPYQvJU5eP9SAPTM-xw_d2Kl8_Y5', 'Content-Type': 'application/json' },
+        body: JSON.stringify({ p: { c: v.name, t: v.phone, i: plainName(p.name), v: p.price || 0, p: 'A combinar', e: del ? 'Entrega' : 'Retirada', a: v.address, d: v.dt, dz: new Date(v.dt).toISOString(), m: v.note, sp: v.special, an: v.anon, rn: v.rn, rt: v.rt } }) });
+      const j = await res.json().catch(() => null); if (!res.ok) throw new Error((j && j.message) || String(res.status));
+      const id = j;
+      try { store.set(NAME_KEY, v.name); } catch (_) { /* ignora */ }
+      inner.innerHTML = `<button class="detail__close" type="button" data-act="close" aria-label="Fechar"><svg class="icon" aria-hidden="true"><use href="#i-x"/></svg></button>
+        <div class="of of--done"><h2 class="of__title" id="order-title">Pedido enviado!</h2>
+        <p class="of__lead">Seu pedido <strong>${esc(id)}</strong> foi registrado na Santarém Flores para <strong>${fmt(v.dt)}</strong>. Guarde o código: para acompanhar, informe os 4 últimos dígitos do seu telefone.</p>
+        <a class="btn btn--brown btn--block" data-act="close" href="#r=${esc(id)}">Acompanhar este pedido</a>
+        <button class="btn btn--line btn--block" type="button" data-act="close">Fechar</button></div>`;
+    } catch (ex) { console.error('[pedido]', ex); btn.disabled = false; btn.textContent = 'Enviar pedido'; fail(/antecedencia/.test(ex.message) ? 'Escolha um horário com pelo menos 1 hora de antecedência.' : /limite/.test(ex.message) ? 'Muitos pedidos deste telefone em pouco tempo. Tente mais tarde.' : 'Não foi possível enviar o pedido agora. Tente novamente.'); }
   }
 })();
-
 </script>
 <script>
 /* =====================================================================
@@ -2644,22 +2273,27 @@ window.SF_SEED_PRODUCTS = [
 </script>
 <script>
 /* ===== SISTEMA INTERNO · Santarém Flores =====
-   Login Google: cole abaixo o "ID do cliente OAuth (Web)" do Google Cloud. Dados ficam neste navegador (localStorage). */
+   Dados e contas ficam no banco online (Supabase); a senha é conferida no servidor. */
 (function () {
   'use strict';
-  var CFG = { googleClientId: '' };
+  var DB = { url: 'https://uuzdbfizpozdacygnzkj.supabase.co', key: 'sb_publishable_8f8lPYQvJU5eP9SAPTM-xw_d2Kl8_Y5' };
   var ST = ['Recebido', 'Em produção', 'Pronto', 'Saiu para entrega', 'Entregue', 'Cancelado'];
   var ROLES = { admin: 'Administrador', vendas: 'Vendas', producao: 'Produção', entrega: 'Entregador' };
-  var TABS = { painel: ['Painel', 'admin'], vendas: ['Vendas', 'admin,vendas'], producao: ['Produção', 'admin,producao'], entregas: ['Entregas', 'admin,vendas,entrega'], rastreio: ['Rastreio', 'admin,vendas,producao,entrega'], usuarios: ['Usuários e senhas', 'admin'] };
+  var TABS = { painel: ['Painel', 'admin'], vendas: ['Vendas', 'admin,vendas'], producao: ['Produção', 'admin,producao'], entregas: ['Entregas', 'admin,vendas,entrega'], rastreio: ['Rastreio', 'admin,vendas,producao'], usuarios: ['Usuários e senhas', 'admin'] };
   var $ = function (s) { return document.querySelector(s); };
   var E = function (s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); };
   var R = function (n) { return 'R$ ' + (+n || 0).toFixed(2).replace('.', ','); };
   var F = function (t) { return new Date(t).toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' }); };
   var ld = function (k, d) { try { return JSON.parse(localStorage.getItem(k)) || d; } catch (e) { return d; } };
-  var D = ld('sf_data', { o: [], s: [], n: 0 }), US = ld('sf_users', []), me = null, T = 'painel', Q = '', root;
-  function sv() { localStorage.setItem('sf_data', JSON.stringify(D)); }
-  function su() { localStorage.setItem('sf_users', JSON.stringify(US)); }
+  var D = { o: [], s: [] }, US = [], me = null, TK = sessionStorage.getItem('sf_tk') || '', T = 'painel', Q = '', root;
   function O(id) { return D.o.filter(function (o) { return o.id === id; })[0]; }
+  function ent() { return me && me.r === 'entrega'; }
+  function pty(o) {
+    var s = E(o.c) + '<br><small>' + E(o.t) + '</small>', r = o.rn ? '<br>Para: <b>' + E(o.rn) + '</b><br><small>' + E(o.rt) + '</small>' : '';
+    if (ent()) return o.an ? '<b>' + E(o.rn) + '</b><br><small>' + E(o.rt) + '</small>' : s + r;
+    return (o.an ? '<span class="sf-s">🕶 Anônimo</span><br>' : '') + s + r;
+  }
+  function minDT() { var d = new Date(Math.ceil((Date.now() + 3600000) / 60000) * 60000), q = function (n) { return String(n).padStart(2, '0'); }; return d.getFullYear() + '-' + q(d.getMonth() + 1) + '-' + q(d.getDate()) + 'T' + q(d.getHours()) + ':' + q(d.getMinutes()); }
   function logo() { var i = document.querySelector('.brand img'); return i ? i.src : ''; }
   function fd(f) { var o = {}; new FormData(f).forEach(function (v, k) { o[k] = String(v).trim(); }); return o; }
   async function hs(p, salt) {
@@ -2671,45 +2305,51 @@ window.SF_SEED_PRODUCTS = [
   function err(m) { var e = $('#sf-err'); if (e) e.textContent = m; }
   function allowed() { return Object.keys(TABS).filter(function (k) { return TABS[k][1].split(',').indexOf(me.r) > -1; }); }
 
+  /* ---------- servidor ---------- */
+  function rpc(fn, a) {
+    return fetch(DB.url + '/rest/v1/rpc/' + fn, { method: 'POST', headers: { apikey: DB.key, 'Content-Type': 'application/json' }, body: JSON.stringify(a || {}) }).then(function (r) {
+      return r.json().catch(function () { return null; }).then(function (j) { if (!r.ok) throw new Error((j && j.message) || 'erro ' + r.status); return j; });
+    });
+  }
+  function tk(fn, a) { a = a || {}; a.t = TK; return rpc(fn, a); }
+  function msg(e) {
+    var m = e.message || '';
+    return /credenciais/.test(m) ? 'E-mail ou senha incorretos.' : /antecedencia/.test(m) ? 'A data e a hora devem ser de pelo menos 1 hora a partir de agora.' : /limite/.test(m) ? 'Muitos pedidos deste telefone em pouco tempo.' : /dados_invalidos|data_invalida/.test(m) ? 'Confira os dados informados.' : /sem_permissao/.test(m) ? 'Sem permissão para esta ação.' : /ja_existe/.test(m) ? 'Esse e-mail já está cadastrado.' : /nao_encontrado/.test(m) ? 'Não encontrado. Confira o código e os 4 últimos dígitos do telefone.' : /Failed to fetch|NetworkError|Load failed/.test(m) ? 'Sem conexão com o servidor.' : m || 'Erro inesperado.';
+  }
+  function fail(e) {
+    if (/sessao_invalida/.test(e.message || '')) { sessionStorage.clear(); TK = ''; me = null; loginView(); return err('Sessão expirada. Entre novamente.'); }
+    if ($('#sf-err')) err(msg(e)); else alert(msg(e));
+  }
+  async function pull() {
+    D.o = (await tk('sf_listar')) || [];
+    D.s = me.r === 'admin' || me.r === 'producao' ? (await tk('sf_est_listar')) || [] : [];
+    if (me.r === 'admin') US = (await tk('sf_usuarios')) || [];
+  }
+  function err(m) { var e = $('#sf-err'); if (e) e.textContent = m; }
+  function allowed() { return Object.keys(TABS).filter(function (k) { return TABS[k][1].split(',').indexOf(me.r) > -1; }); }
+
   /* ---------- login ---------- */
-  function loginView() {
-    var first = !US.length;
+  async function loginView() {
+    var first = false; try { first = !(await rpc('sf_tem_equipe')); } catch (e) { /* mostra login */ }
     root.innerHTML = '<div class="sf-login"><img src="' + logo() + '" alt=""><h2>' + (first ? 'Criar conta administradora' : 'Acesso interno') + '</h2>' +
       '<form data-f="' + (first ? 'setup' : 'login') + '">' + (first ? '<input name="n" placeholder="Seu nome" required>' : '') +
-      '<input name="e" type="email" placeholder="E-mail (conta Google)" required autocomplete="username"><input name="p" type="password" placeholder="Senha (mín. 6)" required minlength="6" autocomplete="current-password">' +
-      '<button class="sf-b">' + (first ? 'Criar e entrar' : 'Entrar') + '</button></form>' +
-      (first ? '' : '<div class="sf-or">ou</div><div id="sf-gb"></div>') + '<p class="sf-x" id="sf-err"></p><button class="sf-l" data-a="close">← Voltar ao site</button></div>';
-    if (!first) gbtn();
+      '<input name="e" type="email" placeholder="E-mail" required autocomplete="username"><input name="p" type="password" placeholder="Senha (mín. 6)" required minlength="6" autocomplete="current-password">' +
+      '<button class="sf-b">' + (first ? 'Criar e entrar' : 'Entrar') + '</button></form><p class="sf-x" id="sf-err"></p><button class="sf-l" data-a="close">← Voltar ao site</button></div>';
   }
-  function gbtn() {
-    var b = $('#sf-gb');
-    if (!CFG.googleClientId) { b.innerHTML = '<button class="sf-gb" data-a="gnone">Entrar com Google</button>'; return; }
-    var go = function () {
-      google.accounts.id.initialize({ client_id: CFG.googleClientId, callback: function (r) {
-        try {
-          var p = JSON.parse(decodeURIComponent(escape(atob(r.credential.split('.')[1].replace(/-/g, '+').replace(/_/g, '/')))));
-          var u = US.filter(function (x) { return x.e === String(p.email).toLowerCase() && x.on !== false; })[0];
-          if (u && p.email_verified) enter(u); else err('Este e-mail Google não está cadastrado. Peça ao administrador.');
-        } catch (e) { err('Falha no login Google.'); }
-      } });
-      google.accounts.id.renderButton(b, { theme: 'outline', size: 'large', text: 'signin_with', locale: 'pt-BR' });
-    };
-    if (window.google && google.accounts) go(); else { var s = document.createElement('script'); s.src = 'https://accounts.google.com/gsi/client'; s.onload = go; document.head.appendChild(s); }
+  async function enter(r) {
+    me = { n: r.nome, e: r.email, r: r.papel }; TK = r.token; sessionStorage.setItem('sf_tk', TK); sessionStorage.setItem('sf_me', JSON.stringify(me));
+    await pull(); T = allowed()[0]; render();
   }
-  function enter(u) { me = u; sessionStorage.setItem('sf_sess', u.e); T = allowed()[0]; render(); }
 
   /* ---------- helpers de pedido ---------- */
   function badge(s) { return '<span class="sf-s s' + s + '">' + ST[s] + '</span>'; }
   function nextLabel(o) { return o.s === 0 ? 'Iniciar produção' : o.s === 1 ? 'Marcar pronto' : o.s === 2 ? (o.e === 'Entrega' ? 'Saiu para entrega' : 'Retirado') : o.s === 3 ? 'Confirmar entrega' : ''; }
   function setS(o, s) { o.s = s; o.h.push([s, Date.now(), me.n]); sv(); }
   function adv(o) { setS(o, o.s === 2 && o.e !== 'Entrega' ? 4 : o.s + 1); }
-  function lnk(o) {
-    var p = { id: o.id, c: o.c.split(' ')[0], s: o.s, e: o.e, d: o.d, h: o.h.map(function (x) { return [x[0], x[1]]; }), u: Date.now() };
-    return location.href.split('#')[0] + '#r=' + btoa(unescape(encodeURIComponent(JSON.stringify(p))));
-  }
+  function lnk(o) { return location.href.split('#')[0] + '#r=' + o.id; }
   function wa(o) {
     var t = o.t.replace(/\D/g, ''); if (t.length <= 11) t = '55' + t;
-    var m = 'Olá, ' + o.c.split(' ')[0] + '! Seu pedido ' + o.id + ' na Santarém Flores está: ' + ST[o.s] + '. Acompanhe: ' + lnk(o);
+    var m = 'Olá, ' + o.c.split(' ')[0] + '! Seu pedido ' + o.id + ' na Santarém Flores está: ' + ST[o.s] + '. Acompanhe (informe os 4 últimos dígitos do telefone do pedido): ' + lnk(o);
     return 'https://wa.me/' + t + '?text=' + encodeURIComponent(m);
   }
   function tl(o) {
@@ -2721,12 +2361,12 @@ window.SF_SEED_PRODUCTS = [
   function tbl(l) {
     if (!l.length) return '<p>Nenhum pedido.</p>';
     return '<div class="sf-t"><table><tr><th>Pedido</th><th>Cliente</th><th>Itens</th><th>Valor</th><th>Tipo / previsão</th><th>Status</th><th></th></tr>' + l.map(function (o) {
-      return '<tr><td>' + o.id + '</td><td>' + E(o.c) + '<br><small>' + E(o.t) + '</small></td><td>' + E(o.i) + '</td><td>' + R(o.v) + '<br><small>' + E(o.p) + '</small></td><td>' + o.e + '<br><small>' + E(o.d ? o.d.replace('T', ' ') : '') + '</small></td><td>' + badge(o.s) + '</td><td><button class="sf-b s" data-a="det" data-id="' + o.id + '">Detalhes</button></td></tr>';
+      return '<tr><td>' + o.id + '</td><td>' + pty(o) + '</td><td>' + E(o.i) + '</td><td>' + R(o.v) + '<br><small>' + E(o.p) + '</small></td><td>' + o.e + '<br><small>' + E(o.d ? o.d.replace('T', ' ') : '') + '</small></td><td>' + badge(o.s) + '</td><td><button class="sf-b s" data-a="det" data-id="' + o.id + '">Detalhes</button></td></tr>';
     }).join('') + '</table></div>';
   }
   function card(o, btn) {
-    return '<div class="sf-card"><div class="sf-row"><b>' + o.id + '</b>' + badge(o.s) + '</div><p><b>' + E(o.c) + '</b> · <a href="tel:' + E(o.t) + '">' + E(o.t) + '</a></p><p>' + E(o.i) + '</p>' +
-      (o.m ? '<p><small>Cartão: ' + E(o.m) + '</small></p>' : '') + '<p><small>' + o.e + (o.d ? ' · ' + E(o.d.replace('T', ' ')) : '') + '</small></p>' + (btn || '') +
+    return '<div class="sf-card"><div class="sf-row"><b>' + o.id + '</b>' + badge(o.s) + '</div><p>' + pty(o) + '</p><p>' + E(o.i) + '</p>' +
+      (o.m && !(ent() && o.an) ? '<p><small>Cartão: ' + E(o.m) + '</small></p>' : '') + (o.sp ? '<p><small>Exigência: ' + E(o.sp) + '</small></p>' : '') + '<p><small>' + o.e + (o.d ? ' · ' + E(o.d.replace('T', ' ')) : '') + '</small></p>' + (btn || '') +
       '<div class="sf-row"><button class="sf-b s y" data-a="det" data-id="' + o.id + '">Detalhes</button></div></div>';
   }
 
@@ -2742,7 +2382,7 @@ window.SF_SEED_PRODUCTS = [
     vendas: function () {
       return '<h3>Novo pedido (saída de flores)</h3><form class="sf-f" data-f="novo"><input name="c" placeholder="Cliente" required><input name="t" placeholder="Telefone / WhatsApp" required><input name="i" placeholder="Produto / itens" required class="w">' +
         '<input name="v" type="number" step="0.01" min="0" placeholder="Valor (R$)" required><select name="p"><option>Pix</option><option>Dinheiro</option><option>Cartão</option><option>A pagar</option></select><select name="e"><option>Entrega</option><option>Retirada</option></select>' +
-        '<input name="d" type="datetime-local" title="Previsão"><input name="a" placeholder="Endereço de entrega" class="w"><input name="m" placeholder="Mensagem do cartão" class="w"><button class="sf-b w">Registrar pedido</button></form>' +
+        '<input name="rn" placeholder="Quem vai receber (nome)"><input name="rt" placeholder="Telefone de quem recebe"><input name="d" type="datetime-local" min="' + minDT() + '" title="Entrega/retirada (mín. 1 h a partir de agora)" required><label class="w"><input type="checkbox" name="an" value="1"> Anônimo (o entregador não vê o remetente)</label><input name="a" placeholder="Endereço de entrega" class="w"><input name="m" placeholder="Mensagem do cartão" class="w"><input name="sp" placeholder="Exigência especial (opcional)" class="w"><button class="sf-b w">Registrar pedido</button></form>' +
         '<h3>Todos os pedidos</h3>' + tbl(D.o.slice().reverse());
     },
     producao: function () {
@@ -2769,8 +2409,8 @@ window.SF_SEED_PRODUCTS = [
     usuarios: function () {
       return '<h3>Contas de acesso</h3><div class="sf-t"><table><tr><th>Nome</th><th>E-mail</th><th>Função</th><th>Status</th><th></th></tr>' + US.map(function (u, i) {
         return '<tr><td>' + E(u.n) + '</td><td>' + E(u.e) + '</td><td><select data-a="role" data-i="' + i + '">' + Object.keys(ROLES).map(function (r) { return '<option value="' + r + '" ' + (u.r === r ? 'selected' : '') + '>' + ROLES[r] + '</option>'; }).join('') + '</select></td><td>' + (u.on === false ? 'Bloqueada' : 'Ativa') + '</td><td><div class="sf-row"><button class="sf-b s" data-a="pw" data-i="' + i + '">Nova senha</button><button class="sf-b s" data-a="tg" data-i="' + i + '">' + (u.on === false ? 'Ativar' : 'Bloquear') + '</button><button class="sf-b s r" data-a="ux" data-i="' + i + '">Excluir</button></div></td></tr>';
-      }).join('') + '</table></div><h3>Nova conta</h3><form class="sf-f" data-f="user"><input name="n" placeholder="Nome" required><input name="e" type="email" placeholder="E-mail Google" required><input name="p" type="password" minlength="6" placeholder="Senha inicial (opcional p/ Google)"><select name="r">' + Object.keys(ROLES).map(function (r) { return '<option value="' + r + '">' + ROLES[r] + '</option>'; }).join('') + '</select><button class="sf-b">Criar conta</button></form>' +
-        '<h3>Backup dos dados</h3><div class="sf-row"><button class="sf-b" data-a="exp">Baixar backup</button><label class="sf-b y">Restaurar backup<input type="file" accept=".json" data-a="imp" hidden></label></div>';
+      }).join('') + '</table></div><h3>Nova conta</h3><form class="sf-f" data-f="user"><input name="n" placeholder="Nome" required><input name="e" type="email" placeholder="E-mail" required><input name="p" type="password" minlength="6" placeholder="Senha inicial (mín. 6)" required><select name="r">' + Object.keys(ROLES).map(function (r) { return '<option value="' + r + '">' + ROLES[r] + '</option>'; }).join('') + '</select><button class="sf-b">Criar conta</button></form>' +
+        '';
     }
   };
   function render() {
@@ -2780,74 +2420,73 @@ window.SF_SEED_PRODUCTS = [
   }
   function det(id) {
     var o = O(id); if (!o) return;
-    $('#sf-m').innerHTML = '<div class="sf-mo" data-a="mx"><div class="sf-md"><div class="sf-row"><b>' + o.id + '</b>' + badge(o.s) + '</div><p><b>' + E(o.c) + '</b> · ' + E(o.t) + '</p><p>' + E(o.i) + '</p><p>' + R(o.v) + ' · ' + E(o.p) + '</p><p>' + o.e + (o.a ? ': ' + E(o.a) : '') + '</p>' + (o.d ? '<p>Previsão: ' + E(o.d.replace('T', ' ')) + '</p>' : '') + (o.m ? '<p>Cartão: ' + E(o.m) + '</p>' : '') + (o.en ? '<p>Entregador: ' + E(o.en) + '</p>' : '') + tl(o) +
+    $('#sf-m').innerHTML = '<div class="sf-mo" data-a="mx"><div class="sf-md"><div class="sf-row"><b>' + o.id + '</b>' + badge(o.s) + '</div><p>' + pty(o) + '</p><p>' + E(o.i) + '</p><p>' + R(o.v) + ' · ' + E(o.p) + '</p><p>' + o.e + (o.a ? ': ' + E(o.a) : '') + '</p>' + (o.d ? '<p>Previsão: ' + E(o.d.replace('T', ' ')) + '</p>' : '') + (o.m && !(ent() && o.an) ? '<p>Cartão: ' + E(o.m) + '</p>' : '') + (o.sp ? '<p>Exigência: ' + E(o.sp) + '</p>' : '') + (o.en ? '<p>Entregador: ' + E(o.en) + '</p>' : '') + tl(o) +
       '<div class="sf-row">' + (o.s < 4 ? '<button class="sf-b" data-a="adv" data-id="' + o.id + '">' + nextLabel(o) + '</button><button class="sf-b r" data-a="can" data-id="' + o.id + '">Cancelar pedido</button>' : '') +
-      '<a class="sf-b y" target="_blank" rel="noopener" href="' + wa(o) + '">Status por WhatsApp</a><button class="sf-b" data-a="cp" data-id="' + o.id + '">Copiar link</button><button class="sf-l" data-a="mc">Fechar</button></div></div></div>';
+      (ent() ? '' : '<a class="sf-b y" target="_blank" rel="noopener" href="' + wa(o) + '">Status por WhatsApp</a><button class="sf-b" data-a="cp" data-id="' + o.id + '">Copiar link</button>') + '<button class="sf-l" data-a="mc">Fechar</button></div></div></div>';
   }
 
   /* ---------- eventos ---------- */
   function open() {
     root.hidden = false; document.body.style.overflow = 'hidden';
-    var u = US.filter(function (x) { return x.e === sessionStorage.getItem('sf_sess') && x.on !== false; })[0];
-    if (u) enter(u); else loginView();
+    var m = sessionStorage.getItem('sf_me');
+    if (TK && m) { me = JSON.parse(m); pull().then(function () { T = allowed()[0]; render(); }).catch(function () { sessionStorage.clear(); TK = ''; me = null; loginView(); }); } else loginView();
   }
-  function close() { root.hidden = true; document.body.style.overflow = ''; if (location.hash === '#sistema') history.replaceState(null, '', location.pathname + location.search); }
+  function close() { root.hidden = true; document.body.style.overflow = ''; if (/^#(sistema|r=)/.test(location.hash)) history.replaceState(null, '', location.pathname + location.search); }
   function pub() {
-    var m = location.hash.match(/^#r=(.+)/); if (!m) return false;
-    try {
-      var p = JSON.parse(decodeURIComponent(escape(atob(m[1])))), o = { e: p.e, s: p.s, h: p.h };
-      root.hidden = false; document.body.style.overflow = 'hidden';
-      root.innerHTML = '<div class="sf-login"><img src="' + logo() + '" alt=""><h2>Pedido ' + E(p.id) + '</h2><p>Olá, ' + E(p.c) + '! Status: ' + badge(p.s) + '</p><div style="text-align:left">' + tl(o) + '</div><small>Atualizado em ' + F(p.u) + '. Novas atualizações chegam pelo WhatsApp.</small><button class="sf-l" data-a="close">Ver o site</button></div>';
-      return true;
-    } catch (e) { return false; }
+    var m = location.hash.match(/^#r=(SF-\d+)/); if (!m) return false;
+    root.hidden = false; document.body.style.overflow = 'hidden';
+    root.innerHTML = '<div class="sf-login"><img src="' + logo() + '" alt=""><h2>Pedido ' + E(m[1]) + '</h2><form data-f="rast" data-id="' + m[1] + '"><input name="q" inputmode="numeric" maxlength="4" pattern="\\d{4}" placeholder="Últimos 4 dígitos do telefone do pedido" required><button class="sf-b">Ver andamento</button></form><div id="sf-r" style="text-align:left"></div><p class="sf-x" id="sf-err"></p><button class="sf-l" data-a="close">Ver o site</button></div>';
+    return true;
   }
   function cp(t) { if (navigator.clipboard) navigator.clipboard.writeText(t).then(function () { alert('Link copiado!'); }, function () { prompt('Copie o link:', t); }); else prompt('Copie o link:', t); }
+  async function hc(ev) {
+    var el = ev.target.closest('[data-a]'); if (!el) return; var a = el.dataset.a, id = el.dataset.id, o = id && O(id), i = el.dataset.i;
+    if (a === 'open') return open(); if (a === 'close') return close();
+    if (a === 'mx' && ev.target !== el) return;
+    if (a === 'mx' || a === 'mc') { $('#sf-m').innerHTML = ''; return; }
+    if (a === 'out') { try { await tk('sf_sair'); } catch (e) { /* ignora */ } sessionStorage.clear(); TK = ''; me = null; return loginView(); }
+    if (a === 'tab') { T = el.dataset.v; return render(); }
+    if (a === 'det') return det(id);
+    if (a === 'adv' && o) { var mo = $('#sf-m').innerHTML; await tk('sf_status', { p_id: id, p_s: o.s === 2 && o.e !== 'Entrega' ? 4 : o.s + 1 }); await pull(); render(); if (mo) det(id); return; }
+    if (a === 'can' && o && confirm('Cancelar o pedido ' + id + '?')) { await tk('sf_status', { p_id: id, p_s: 5 }); await pull(); render(); return det(id); }
+    if (a === 'cp' && o) return cp(lnk(o));
+    if (a === 'stk') { await tk('sf_est_mov', { p_id: D.s[i].id, p_d: +el.dataset.d }); await pull(); return render(); }
+    if (a === 'stkx' && confirm('Remover este item do estoque?')) { await tk('sf_est_del', { p_id: D.s[i].id }); await pull(); return render(); }
+    if (a === 'pw') { var p = prompt('Nova senha para ' + US[i].n + ' (mín. 6):'); if (p && p.length >= 6) { await tk('sf_usuario_senha', { p_e: US[i].e, p_s: p }); alert('Senha alterada.'); } return; }
+    if (a === 'tg') { if (US[i].e === me.e) return alert('Você não pode bloquear a própria conta.'); await tk('sf_usuario_ativo', { p_e: US[i].e, p_a: US[i].on === false }); await pull(); return render(); }
+    if (a === 'ux') { if (US[i].e === me.e) return alert('Você não pode excluir a própria conta.'); if (confirm('Excluir a conta de ' + US[i].n + '?')) { await tk('sf_usuario_del', { p_e: US[i].e }); await pull(); render(); } return; }
+  }
+  async function hch(ev) {
+    var el = ev.target; if (!el.dataset || !el.dataset.a) return;
+    if (el.dataset.a === 'ent') { await tk('sf_entregador', { p_id: el.dataset.id, p_nome: el.value }); await pull(); }
+    if (el.dataset.a === 'role') { var u = US[el.dataset.i]; if (u.e === me.e) { alert('Você não pode mudar a própria função.'); return render(); } await tk('sf_usuario_papel', { p_e: u.e, p_r: el.value }); await pull(); }
+  }
+  async function hs2(ev) {
+    var f = ev.target; if (!f.dataset || !f.dataset.f) return; ev.preventDefault(); var x = fd(f), k = f.dataset.f;
+    if (k === 'setup') return enter(await rpc('sf_setup', { p_n: x.n, p_e: x.e, p_s: x.p }));
+    if (k === 'login') return enter(await rpc('sf_login', { p_e: x.e, p_s: x.p }));
+    if (k === 'rast') { var r = await rpc('sf_rastrear', { p_id: f.dataset.id, p_tel: x.q }); err(''); $('#sf-r').innerHTML = '<p>Olá, ' + E(r.c) + '! ' + badge(r.s) + '</p>' + tl(r) + '<small>Previsão: ' + E((r.d || '').replace('T', ' ')) + '</small>'; return; }
+    if (k === 'novo') {
+      if (new Date(x.d) < new Date(minDT())) return alert('A data e a hora devem ser de pelo menos 1 hora a partir de agora.');
+      if (x.e === 'Entrega' && (!x.rn || !x.a)) return alert('Informe quem vai receber e o endereço de entrega.');
+      await tk('sf_criar_interno', { p: { c: x.c, t: x.t, i: x.i, v: +x.v, p: x.p, e: x.e, a: x.a, d: x.d, dz: new Date(x.d).toISOString(), m: x.m, sp: x.sp, an: x.e === 'Entrega' && !!x.an, rn: x.rn, rt: x.rt } });
+      await pull(); return render();
+    }
+    if (k === 'est') { await tk('sf_est_add', { p_n: x.n, p_q: +x.q, p_m: +x.m }); await pull(); return render(); }
+    if (k === 'busca') { Q = x.q; return render(); }
+    if (k === 'user') { await tk('sf_usuario_criar', { p_n: x.n, p_e: x.e, p_s: x.p, p_r: x.r }); await pull(); return render(); }
+  }
   function init() {
     root = document.createElement('div'); root.id = 'sf-app'; root.hidden = true; document.body.appendChild(root);
     var fb = document.querySelector('.footer__bottom'), b = document.createElement('button');
     b.className = 'sf-entry'; b.textContent = 'Acesso interno'; b.setAttribute('data-a', 'open'); (fb || document.body).appendChild(b);
-    document.addEventListener('click', async function (ev) {
-      var el = ev.target.closest('[data-a]'); if (!el) return; var a = el.dataset.a, id = el.dataset.id, o = id && O(id), i = el.dataset.i;
-      if (a === 'open') return open(); if (a === 'close') return close();
-      if (a === 'mx' && ev.target !== el) return;
-      if (a === 'mx' || a === 'mc') { $('#sf-m').innerHTML = ''; return; }
-      if (a === 'gnone') return err('Login Google ainda não configurado: cole o ID do cliente OAuth em CFG.googleClientId (final do index.html).');
-      if (a === 'out') { sessionStorage.removeItem('sf_sess'); me = null; return loginView(); }
-      if (a === 'tab') { T = el.dataset.v; return render(); }
-      if (a === 'det') return det(id);
-      if (a === 'adv' && o) { var mo = $('#sf-m').innerHTML; adv(o); render(); if (mo) det(id); return; }
-      if (a === 'can' && o && confirm('Cancelar o pedido ' + id + '?')) { setS(o, 5); render(); return det(id); }
-      if (a === 'cp' && o) return cp(lnk(o));
-      if (a === 'stk') { var s = D.s[i]; s.q = Math.max(0, s.q + (+el.dataset.d)); sv(); return render(); }
-      if (a === 'stkx' && confirm('Remover este item do estoque?')) { D.s.splice(i, 1); sv(); return render(); }
-      if (a === 'pw') { var p = prompt('Nova senha para ' + US[i].n + ' (mín. 6):'); if (p && p.length >= 6) { US[i].s = salt(); US[i].h = await hs(p, US[i].s); su(); alert('Senha alterada.'); } return; }
-      if (a === 'tg') { if (US[i] === me) return alert('Você não pode bloquear a própria conta.'); US[i].on = US[i].on === false; su(); return render(); }
-      if (a === 'ux') { if (US[i] === me) return alert('Você não pode excluir a própria conta.'); if (confirm('Excluir a conta de ' + US[i].n + '?')) { US.splice(i, 1); su(); render(); } return; }
-      if (a === 'exp') { var l = document.createElement('a'); l.href = URL.createObjectURL(new Blob([JSON.stringify({ d: D, u: US })], { type: 'application/json' })); l.download = 'santarem-flores-backup.json'; l.click(); }
-    });
-    document.addEventListener('change', function (ev) {
-      var el = ev.target; if (!el.dataset || !el.dataset.a) return;
-      if (el.dataset.a === 'ent') { var o = O(el.dataset.id); o.en = el.value; sv(); }
-      if (el.dataset.a === 'role') { var u = US[el.dataset.i]; if (u === me) { alert('Você não pode mudar a própria função.'); return render(); } u.r = el.value; su(); }
-      if (el.dataset.a === 'imp' && el.files[0] && confirm('Substituir todos os dados atuais pelo backup?')) {
-        var r = new FileReader(); r.onload = function () { try { var j = JSON.parse(r.result); D = j.d; US = j.u; sv(); su(); alert('Backup restaurado. Entre novamente.'); sessionStorage.removeItem('sf_sess'); loginView(); } catch (e) { alert('Arquivo inválido.'); } }; r.readAsText(el.files[0]);
-      }
-    });
-    document.addEventListener('submit', async function (ev) {
-      var f = ev.target; if (!f.dataset || !f.dataset.f) return; ev.preventDefault(); var x = fd(f), k = f.dataset.f;
-      if (k === 'setup' || k === 'user') {
-        var em = x.e.toLowerCase(); if (US.some(function (u) { return u.e === em; })) return err('Esse e-mail já está cadastrado.') || alert('Esse e-mail já está cadastrado.');
-        var u = { n: x.n, e: em, r: k === 'setup' ? 'admin' : x.r, on: true, s: salt() }; u.h = x.p ? await hs(x.p, u.s) : ''; US.push(u); su();
-        return k === 'setup' ? enter(u) : render();
-      }
-      if (k === 'login') {
-        var v = US.filter(function (u) { return u.e === x.e.toLowerCase() && u.on !== false; })[0];
-        if (!v || !v.h || await hs(x.p, v.s) !== v.h) return err('E-mail ou senha incorretos.'); return enter(v);
-      }
-      if (k === 'novo') { D.n++; D.o.push({ id: 'SF-' + String(D.n).padStart(4, '0'), c: x.c, t: x.t, i: x.i, v: +x.v, p: x.p, e: x.e, a: x.a, d: x.d, m: x.m, s: 0, en: '', t0: Date.now(), h: [[0, Date.now(), me.n]] }); sv(); return render(); }
-      if (k === 'est') { D.s.push({ n: x.n, q: +x.q, m: +x.m }); sv(); return render(); }
-      if (k === 'busca') { Q = x.q; return render(); }
-    });
+    document.addEventListener('click', function (ev) { hc(ev).catch(fail); });
+    document.addEventListener('change', function (ev) { hch(ev).catch(fail); });
+    document.addEventListener('submit', function (ev) { hs2(ev).catch(fail); });
+    setInterval(function () {
+      if (!me || root.hidden || $('#sf-m').innerHTML || !$('.sf-c') || Array.prototype.some.call(document.querySelectorAll('#sf-app .sf-c input:not([type=checkbox]),#sf-app .sf-c textarea'), function (n) { return n.value; })) return;
+      pull().then(render).catch(function () { /* tenta de novo */ });
+    }, 30000);
     window.addEventListener('hashchange', function () { if (location.hash === '#sistema') open(); else pub(); });
     if (location.hash === '#sistema') open(); else pub();
   }
