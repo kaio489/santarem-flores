@@ -733,6 +733,21 @@ html:not(.js-ready) .reveal { animation: reveal-fallback .01s 3s forwards; }
 #sf-tv > button { top: auto; bottom: 14px; right: 18px; z-index: 3; background: rgba(0, 0, 0, .5); }
 .tvc > div { align-content: start; }
 
+/* 21 · Financeiro, folha, despesas e modo escuro */
+.sf-bar { background: #eee3d0; border-radius: 99px; height: 10px; overflow: hidden; min-width: 80px; }.sf-bar i { display: block; height: 100%; background: #2e9b4f; border-radius: 99px; }
+.sf-bar i.r { background: #d8453b; }.sf-bar i.y { background: #f5b400; }.sf-bar i.b { background: #4a90e2; }
+.sf-pos { color: #1f7a3a; }.sf-neg { color: #b3261e; }.sf-note { opacity: .65; font-size: .82rem; }
+.sf-h .sf-dk { padding: 6px 12px; }
+#sf-app.sf-dark { background: #17100c; color: #f3eadf; }
+#sf-app.sf-dark .sf-n, #sf-app.sf-dark .sf-k div, #sf-app.sf-dark .sf-f, #sf-app.sf-dark .sf-card, #sf-app.sf-dark .sf-t table, #sf-app.sf-dark .sf-md, #sf-app.sf-dark .sf-login, #sf-app.sf-dark .sf-t.o tr { background: #241913; border-color: #3b2c23; color: #f3eadf; }
+#sf-app.sf-dark .sf-t th { background: #2e211a; }#sf-app.sf-dark .sf-t th, #sf-app.sf-dark .sf-t td { border-color: #3b2c23; }
+#sf-app.sf-dark input, #sf-app.sf-dark select, #sf-app.sf-dark textarea, #sf-app.sf-dark .sf-gb { background: #1b120d; color: #f3eadf; border-color: #4a382d; }
+#sf-app.sf-dark .sf-n button { color: #f3eadf; }#sf-app.sf-dark .sf-n button.on { color: #351e16; }
+#sf-app.sf-dark .sf-l { color: #f3eadf; border-color: #4a382d; }#sf-app.sf-dark .sf-s { color: #351e16; }
+#sf-app.sf-dark .sf-bar { background: #3b2c23; }#sf-app.sf-dark .sf-low td { background: #3f1f1b; }
+#sf-app.sf-dark .sf-alert.ok { background: #1c3524; color: #a8e6b8; border-color: #2b5c3a; }#sf-app.sf-dark .sf-alert.bad { background: #43211d; color: #ffb4aa; border-color: #7a3a33; }
+#sf-app.sf-dark .sf-nopic { background: #3a2a10; color: #ffd27a; }#sf-app.sf-dark .sf-pos { color: #6fd08c; }#sf-app.sf-dark .sf-neg { color: #ff8f84; }
+
 </style>
 </head>
 <body>
@@ -2361,13 +2376,13 @@ window.SF_SEED_PRODUCTS = [
   var DB = { url: 'https://uuzdbfizpozdacygnzkj.supabase.co', key: 'sb_publishable_8f8lPYQvJU5eP9SAPTM-xw_d2Kl8_Y5' };
   var ST = ['Recebido', 'Em produção', 'Pronto', 'Saiu para entrega', 'Entregue', 'Cancelado'];
   var ROLES = { admin: 'Administrador', vendas: 'Vendas', producao: 'Produção', entrega: 'Entregador' };
-  var TABS = { painel: ['Painel', 'admin'], vendas: ['Vendas', 'admin,vendas'], producao: ['Produção', 'admin,producao'], entregas: ['Entregas', 'admin,vendas,entrega'], estoque: ['Estoque', 'admin,producao'], rastreio: ['Rastreio', 'admin,vendas,producao'], catalogo: ['Catálogo', 'admin'], usuarios: ['Usuários e senhas', 'admin'] };
+  var TABS = { painel: ['Painel', 'admin'], vendas: ['Vendas', 'admin,vendas'], producao: ['Produção', 'admin,producao'], entregas: ['Entregas', 'admin,vendas,entrega'], estoque: ['Estoque', 'admin,producao'], financeiro: ['Financeiro', 'admin'], folha: ['Folha de pagamento', 'admin'], despesas: ['Despesas', 'admin'], rastreio: ['Rastreio', 'admin,vendas,producao'], catalogo: ['Catálogo', 'admin'], usuarios: ['Usuários e senhas', 'admin'] };
   var $ = function (s) { return document.querySelector(s); };
   var E = function (s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); };
   var R = function (n) { return 'R$ ' + (+n || 0).toFixed(2).replace('.', ','); };
   var F = function (t) { return new Date(t).toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' }); };
   var ld = function (k, d) { try { return JSON.parse(localStorage.getItem(k)) || d; } catch (e) { return d; } };
-  var D = { o: [], s: [] }, US = [], me = null, TK = sessionStorage.getItem('sf_tk') || '', T = 'painel', Q = '', AO = false, DEF = '', root;
+  var D = { o: [], s: [] }, FN = { f: [], p: [], d: [] }, US = [], DK = localStorage.getItem('sf_dark') === '1', me = null, TK = sessionStorage.getItem('sf_tk') || '', T = 'painel', Q = '', AO = false, DEF = '', root;
   function O(id) { return D.o.filter(function (o) { return o.id === id; })[0]; }
   function ent() { return me && me.r === 'entrega'; }
   function pty(o) {
@@ -2405,7 +2420,7 @@ window.SF_SEED_PRODUCTS = [
   async function pull() {
     D.o = (await tk('sf_listar')) || [];
     D.s = me.r === 'admin' || me.r === 'producao' ? (await tk('sf_est_listar')) || [] : [];
-    if (me.r === 'admin') US = (await tk('sf_usuarios')) || [];
+    if (me.r === 'admin') { US = (await tk('sf_usuarios')) || []; FN = (await tk('sf_fin_tudo')) || FN; }
   }
   function err(m) { var e = $('#sf-err'); if (e) e.textContent = m; }
   function allowed() { return Object.keys(TABS).filter(function (k) { return TABS[k][1].split(',').indexOf(me.r) > -1; }); }
@@ -2461,6 +2476,29 @@ window.SF_SEED_PRODUCTS = [
     var ps = (window.SF && SF.listProducts && SF.listProducts()) || [], n = String(o.i || '').toLowerCase();
     var p = ps.filter(function (x) { return SF.plainName(x.name).toLowerCase() === n; })[0];
     return p && p.image ? '<img class="sf-pic" alt="' + E(o.i) + '" src="' + E(p.image) + '">' : '<div class="sf-pic sf-nopic">📷 sem foto — confira o item</div>';
+  }
+  function ym(d) { return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0'); }
+  var MS = ym(new Date());
+  function ml(m) { var p = m.split('-'); return new Date(+p[0], +p[1] - 1, 1).toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' }); }
+  function nm(x) { return +x || 0; }
+  function sm(l, f) { return l.reduce(function (t, x) { return t + f(x); }, 0); }
+  function liq(r) { return nm(r.salario) + nm(r.extras) + nm(r.bonus) - nm(r.descontos); }
+  function vM(m) { return D.o.filter(function (o) { return o.s !== 5 && ym(new Date(o.t0)) === m; }); }
+  function fM(m) { return sm(FN.p.filter(function (r) { return r.mes === m; }), liq); }
+  function dM(m) { return sm(FN.d.filter(function (x) { return x.dia.slice(0, 7) === m; }), function (x) { return nm(x.valor); }); }
+  function bar(v, mx, c) { return '<div class="sf-bar"><i class="' + (c || '') + '" style="width:' + (mx > 0 ? Math.max(2, Math.round(v / mx * 100)) : 0) + '%"></i></div>'; }
+  function mesel() { return '<label>Mês <input class="sf-s2" style="width:auto" type="month" value="' + MS + '" data-a="mes"></label>'; }
+  function modal(h) { $('#sf-m').innerHTML = '<div class="sf-mo" data-a="mx"><div class="sf-md">' + h + '<button class="sf-l" data-a="mc">Cancelar</button></div></div>'; }
+  function inp(n, ph, v, t, x) { return '<input name="' + n + '" placeholder="' + ph + '" title="' + ph + '" value="' + E(v == null ? '' : v) + '" type="' + (t || 'text') + '" ' + (x || '') + '>'; }
+  function ffm(f) {
+    f = f || { ativo: true };
+    return '<h3 style="margin:0">' + (f.id ? 'Editar funcionário' : 'Novo funcionário') + '</h3><form class="sf-f" data-f="func" style="grid-template-columns:1fr"><input type="hidden" name="id" value="' + (f.id || '') + '"><input type="hidden" name="ativo" value="' + (f.ativo !== false) + '">' +
+      inp('nome', 'Nome completo', f.nome, 'text', 'required') + inp('cargo', 'Cargo / função', f.cargo) + inp('tel', 'Telefone', f.tel) + inp('pix', 'Chave PIX', f.pix) + inp('salario', 'Salário base (R$)', f.salario, 'number', 'step="0.01" min="0" required') + '<label>Admissão ' + inp('admissao', 'Admissão', f.admissao, 'date') + '</label>' + inp('obs', 'Observações', f.obs) + '<button class="sf-b">Salvar</button></form>';
+  }
+  function lfm(fid) {
+    var f = FN.f.filter(function (x) { return x.id === fid; })[0], r = FN.p.filter(function (x) { return x.func_id === fid && x.mes === MS; })[0] || { salario: f.salario, extras: 0, bonus: 0, descontos: 0, pago: false };
+    return '<h3 style="margin:0">' + E(f.nome) + ' · ' + ml(MS) + '</h3><form class="sf-f" data-f="folha" style="grid-template-columns:1fr"><input type="hidden" name="func_id" value="' + fid + '"><input type="hidden" name="mes" value="' + MS + '">' +
+      '<label>Salário ' + inp('salario', 'Salário', r.salario, 'number', 'step="0.01" min="0"') + '</label><label>Horas extras / comissão ' + inp('extras', 'Extras', r.extras, 'number', 'step="0.01" min="0"') + '</label><label>Bônus ' + inp('bonus', 'Bônus', r.bonus, 'number', 'step="0.01" min="0"') + '</label><label>Descontos (vales, faltas, INSS...) ' + inp('descontos', 'Descontos', r.descontos, 'number', 'step="0.01" min="0"') + '</label>' + inp('obs', 'Observações', r.obs) + '<label><input type="checkbox" name="pago" value="1" ' + (r.pago ? 'checked' : '') + '> Já foi pago</label><button class="sf-b">Salvar lançamento</button></form>';
   }
   function who(o, st) { var h = o.h.filter(function (x) { return x[0] === st; })[0]; return h ? E(h[2]) + ' às ' + new Date(h[1]).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }) : ''; }
   function urg(o) { var t = new Date(o.d).getTime() - Date.now(); return isNaN(t) ? '' : t < 0 ? 'Atrasado' : t < 7200000 ? 'Urgente' : ''; }
@@ -2522,6 +2560,46 @@ window.SF_SEED_PRODUCTS = [
       }).join('') + '</table></div>';
       return '<h3>Estoque de flores</h3><form class="sf-f" data-f="est"><input name="n" placeholder="Flor / insumo" required><input name="q" type="number" min="0" placeholder="Quantidade" required><input name="m" type="number" min="0" placeholder="Mínimo (alerta)" required><button class="sf-b">Adicionar</button></form><br>' + st;
     },
+    financeiro: function () {
+      var m = MS, vs = vM(m), v = sm(vs, function (o) { return nm(o.v); }), d = dM(m), f = fM(m), res = v - d - f, cat = {}, ms = [], i;
+      FN.d.filter(function (x) { return x.dia.slice(0, 7) === m; }).forEach(function (x) { cat[x.categoria] = (cat[x.categoria] || 0) + nm(x.valor); }); if (f) cat['Folha de pagamento'] = f;
+      var ck = Object.keys(cat).sort(function (a, b) { return cat[b] - cat[a]; });
+      for (i = 5; i >= 0; i--) ms.push(ym(new Date(+m.slice(0, 4), +m.slice(5) - 1 - i, 1)));
+      var mx = Math.max.apply(null, ms.map(function (x) { return Math.max(sm(vM(x), function (o) { return nm(o.v); }), dM(x) + fM(x)); })), pc = {}, cl = {};
+      vs.forEach(function (o) { pc[o.i] = (pc[o.i] || 0) + 1; if (o.c) cl[o.c] = (cl[o.c] || 0) + nm(o.v); });
+      var top = function (o, f2) { return Object.keys(o).sort(function (a, b) { return o[b] - o[a]; }).slice(0, 5).map(function (k) { return '<tr><td>' + E(k) + '</td><td>' + f2(o[k]) + '</td></tr>'; }).join('') || '<tr><td>Sem dados</td><td></td></tr>'; };
+      var k = function (t, x, c) { return '<div><small>' + t + '</small><b class="' + (c || '') + '">' + x + '</b></div>'; };
+      return '<div class="sf-row">' + mesel() + '</div><h3>Resultado de ' + ml(m) + '</h3><div class="sf-k">' + k('Vendas', R(v)) + k('Pedidos', vs.length) + k('Ticket médio', R(vs.length ? v / vs.length : 0)) + k('Despesas', R(d)) + k('Folha de pagamento', R(f)) + k('Resultado', R(res), res >= 0 ? 'sf-pos' : 'sf-neg') + '</div>' +
+        '<p class="sf-note">Vendas = valor dos pedidos não cancelados do mês (pedidos "a combinar" entram com o valor informado). Resultado = vendas − despesas − folha.</p>' +
+        '<h3>Para onde foi o dinheiro</h3><div class="sf-t"><table>' + (ck.map(function (c) { return '<tr><td>' + E(c) + '</td><td>' + R(cat[c]) + '</td><td style="width:40%">' + bar(cat[c], cat[ck[0]], c === 'Folha de pagamento' ? 'b' : 'y') + '</td></tr>'; }).join('') || '<tr><td>Sem despesas lançadas.</td></tr>') + '</table></div>' +
+        '<h3>Últimos 6 meses</h3><div class="sf-t"><table><tr><th>Mês</th><th>Vendas</th><th>Despesas</th><th>Folha</th><th>Resultado</th><th></th></tr>' + ms.map(function (x) {
+          var a = sm(vM(x), function (o) { return nm(o.v); }), b = dM(x), c = fM(x), r2 = a - b - c;
+          return '<tr><td>' + ml(x) + '</td><td>' + R(a) + '</td><td>' + R(b) + '</td><td>' + R(c) + '</td><td class="' + (r2 >= 0 ? 'sf-pos' : 'sf-neg') + '">' + R(r2) + '</td><td style="width:22%">' + bar(a, mx) + bar(b + c, mx, 'r') + '</td></tr>';
+        }).join('') + '</table></div><div class="sf-g"><div><h3>Produtos mais vendidos</h3><div class="sf-t"><table>' + top(pc, function (n) { return n + ' pedido(s)'; }) + '</table></div></div><div><h3>Melhores clientes</h3><div class="sf-t"><table>' + top(cl, R) + '</table></div></div></div>';
+    },
+    folha: function () {
+      var m = MS, rows = {}, all = FN.p.filter(function (r) { return r.mes === m; }); all.forEach(function (r) { rows[r.func_id] = r; });
+      var tot = sm(all, liq), pg = sm(all.filter(function (r) { return r.pago; }), liq), k = function (t, x) { return '<div><small>' + t + '</small><b>' + x + '</b></div>'; };
+      var meses = {}; FN.p.forEach(function (r) { var o = meses[r.mes] || (meses[r.mes] = { n: 0, t: 0, p: 0 }); o.n++; o.t += liq(r); if (r.pago) o.p += liq(r); });
+      var mk = Object.keys(meses).sort().reverse(), mxm = Math.max.apply(null, mk.map(function (x) { return meses[x].t; }).concat([0]));
+      return '<div class="sf-row">' + mesel() + '<button class="sf-b y" data-a="gf">⚡ Gerar folha do mês</button><button class="sf-b" data-a="nf">＋ Novo funcionário</button></div>' +
+        '<h3>Folha de ' + ml(m) + '</h3><div class="sf-k">' + k('Funcionários ativos', FN.f.filter(function (f) { return f.ativo; }).length) + k('Total da folha', R(tot)) + k('Já pago', R(pg)) + k('A pagar', R(tot - pg)) + '</div><br>' +
+        '<div class="sf-t o"><table><tr><th>Funcionário</th><th>Salário</th><th>Extras</th><th>Bônus</th><th>Descontos</th><th>Líquido</th><th>Status</th><th></th></tr>' + (FN.f.filter(function (f) { return f.ativo || rows[f.id]; }).map(function (f) {
+          var r = rows[f.id];
+          return '<tr><td data-l="Funcionário"><b>' + E(f.nome) + '</b><br><small>' + E(f.cargo) + '</small></td><td data-l="Salário">' + R(r ? r.salario : f.salario) + '</td><td data-l="Extras">' + R(r && r.extras) + '</td><td data-l="Bônus">' + R(r && r.bonus) + '</td><td data-l="Descontos">' + R(r && r.descontos) + '</td><td data-l="Líquido"><b>' + R(r ? liq(r) : 0) + '</b></td><td data-l="Status">' + (r ? (r.pago ? '<span class="sf-s s4">Pago</span>' : '<span class="sf-s s1">A pagar</span>') : '<span class="sf-s">Sem lançamento</span>') + '</td><td><div class="sf-row"><button class="sf-b s" data-a="lanc" data-fid="' + f.id + '">Lançar</button>' + (r ? '<button class="sf-b s y" data-a="pagar" data-fid="' + f.id + '">' + (r.pago ? 'Desfazer' : 'Marcar pago') + '</button>' : '') + '</div></td></tr>';
+        }).join('') || '<tr><td>Cadastre funcionários abaixo.</td></tr>') + '</table></div>' +
+        '<h3>Gasto com folha por mês</h3><div class="sf-t"><table><tr><th>Mês</th><th>Lançamentos</th><th>Total</th><th>Pago</th><th></th></tr>' + (mk.map(function (x) { return '<tr><td>' + ml(x) + '</td><td>' + meses[x].n + '</td><td><b>' + R(meses[x].t) + '</b></td><td>' + R(meses[x].p) + '</td><td style="width:30%">' + bar(meses[x].t, mxm, 'b') + '</td></tr>'; }).join('') || '<tr><td>Nenhuma folha gerada ainda.</td></tr>') + '</table></div>' +
+        '<h3>Cadastro de funcionários</h3><div class="sf-t o"><table><tr><th>Nome</th><th>Cargo</th><th>Contato</th><th>Salário base</th><th>Admissão</th><th>Status</th><th></th></tr>' + (FN.f.map(function (f, i) {
+          return '<tr><td data-l="Nome"><b>' + E(f.nome) + '</b></td><td data-l="Cargo">' + E(f.cargo) + '</td><td data-l="Contato">' + E(f.tel) + (f.pix ? '<br><small>PIX: ' + E(f.pix) + '</small>' : '') + '</td><td data-l="Salário">' + R(f.salario) + '</td><td data-l="Admissão">' + E((f.admissao || '').split('-').reverse().join('/')) + '</td><td data-l="Status">' + (f.ativo ? 'Ativo' : 'Inativo') + '</td><td><div class="sf-row"><button class="sf-b s" data-a="ef" data-i="' + i + '">Editar</button><button class="sf-b s y" data-a="aft" data-i="' + i + '">' + (f.ativo ? 'Inativar' : 'Ativar') + '</button><button class="sf-b s r" data-a="df" data-i="' + i + '">Excluir</button></div></td></tr>';
+        }).join('') || '<tr><td>Nenhum funcionário cadastrado.</td></tr>') + '</table></div>';
+    },
+    despesas: function () {
+      var m = MS, l = FN.d.filter(function (x) { return x.dia.slice(0, 7) === m; }), cats = ['Flores e insumos', 'Embalagens', 'Aluguel', 'Energia e água', 'Transporte e combustível', 'Marketing', 'Manutenção', 'Impostos e taxas', 'Outros'];
+      return '<div class="sf-row">' + mesel() + '</div><h3>Lançar despesa</h3><form class="sf-f" data-f="desp"><input name="dia" type="date" value="' + ym(new Date()) + '-' + String(new Date().getDate()).padStart(2, '0') + '" required><select name="categoria">' + cats.map(function (c) { return '<option>' + c + '</option>'; }).join('') + '</select><input name="descricao" placeholder="Descrição"><input name="fornecedor" placeholder="Fornecedor"><input name="valor" type="number" step="0.01" min="0.01" placeholder="Valor (R$)" required><button class="sf-b">Lançar</button></form>' +
+        '<h3>Despesas de ' + ml(m) + ' · ' + R(sm(l, function (x) { return nm(x.valor); })) + '</h3><div class="sf-t o"><table><tr><th>Data</th><th>Categoria</th><th>Descrição</th><th>Fornecedor</th><th>Valor</th><th></th></tr>' + (l.map(function (x) {
+          return '<tr><td data-l="Data">' + E(x.dia.split('-').reverse().join('/')) + '</td><td data-l="Categoria">' + E(x.categoria) + '</td><td data-l="Descrição">' + E(x.descricao) + '</td><td data-l="Fornecedor">' + E(x.fornecedor) + '</td><td data-l="Valor"><b>' + R(x.valor) + '</b></td><td><button class="sf-b s r" data-a="dd" data-did="' + x.id + '">Apagar</button></td></tr>';
+        }).join('') || '<tr><td>Nenhuma despesa neste mês.</td></tr>') + '</table></div>';
+    },
     catalogo: function () { return '<div id="sf-cat"></div>'; },
     entregas: function () {
       var e = ent(), es = US.filter(function (u) { return u.r === 'entrega' && u.on !== false; });
@@ -2561,7 +2639,7 @@ window.SF_SEED_PRODUCTS = [
   function render() {
     unmountCat();
     var tabs = allowed(); if (tabs.indexOf(T) < 0) T = tabs[0];
-    root.innerHTML = '<header class="sf-h"><img src="' + logo() + '" alt=""><b>Santarém Flores</b><span>' + E(me.n) + ' · ' + ROLES[me.r] + '</span><button data-a="close">Ver site</button><button data-a="out">Sair</button></header>' +
+    root.innerHTML = '<header class="sf-h"><img src="' + logo() + '" alt=""><b>Santarém Flores</b><span>' + E(me.n) + ' · ' + ROLES[me.r] + '</span><button class="sf-dk" data-a="dark" title="Modo escuro">' + (DK ? '☀️' : '🌙') + '</button><button data-a="close">Ver site</button><button data-a="out">Sair</button></header>' +
       '<nav class="sf-n">' + tabs.map(function (k) { return '<button class="' + (k === T ? 'on' : '') + '" data-a="tab" data-v="' + k + '">' + TABS[k][0] + '</button>'; }).join('') + '</nav><main class="sf-c">' + V[T]() + '</main><div id="sf-m"></div>';
     if (T === 'catalogo') mountCat();
   }
@@ -2645,6 +2723,15 @@ window.SF_SEED_PRODUCTS = [
     if (a === 'mx' || a === 'mc') { $('#sf-m').innerHTML = ''; return; }
     if (a === 'out') { try { await tk('sf_sair'); } catch (e) { /* ignora */ } sessionStorage.clear(); TK = ''; me = null; return loginView(); }
     if (a === 'tab') { T = el.dataset.v; return render(); }
+    if (a === 'dark') { DK = !DK; localStorage.setItem('sf_dark', DK ? '1' : '0'); root.classList.toggle('sf-dark', DK); return render(); }
+    var fid = +el.dataset.fid, fx = FN.f.filter(function (z) { return z.id === fid; })[0], fi = FN.f[+i];
+    if (a === 'nf') return modal(ffm()); if (a === 'ef' && fi) return modal(ffm(fi));
+    if (a === 'lanc' && fx) return modal(lfm(fid));
+    if (a === 'pagar' && fx) { var rr = FN.p.filter(function (z) { return z.func_id === fid && z.mes === MS; })[0]; await tk('sf_folha_salvar', { p: Object.assign({}, rr, { pago: !rr.pago }) }); await pull(); return render(); }
+    if (a === 'gf') { await tk('sf_folha_gerar', { p_mes: MS }); await pull(); return render(); }
+    if (a === 'aft' && fi) { await tk('sf_func_salvar', { p: Object.assign({}, fi, { ativo: !fi.ativo }) }); await pull(); return render(); }
+    if (a === 'df' && fi) { if (confirm('Excluir ' + fi.nome + ' e todo o histórico de folha dele? Prefira "Inativar".')) { await tk('sf_func_del', { p_id: fi.id }); await pull(); render(); } return; }
+    if (a === 'dd') { if (confirm('Apagar esta despesa?')) { await tk('sf_desp_del', { p_id: +el.dataset.did }); await pull(); render(); } return; }
     if (a === 'dist') {
       var ee = US.filter(function (u) { return u.r === 'entrega' && u.on !== false; }), ld = {}, un = D.o.filter(function (o) { return o.s === 2 && o.e === 'Entrega' && !o.en; }).sort(byD);
       if (!ee.length || !un.length) return alert(!ee.length ? 'Cadastre entregadores na aba Usuários.' : 'Nenhuma entrega esperando entregador.');
@@ -2671,6 +2758,7 @@ window.SF_SEED_PRODUCTS = [
   }
   async function hch(ev) {
     var el = ev.target; if (!el.dataset || !el.dataset.a) return;
+    if (el.dataset.a === 'mes') { if (el.value) { MS = el.value; render(); } return; }
     if (el.dataset.a === 'pi') { var f = el.form, op = el.options[el.selectedIndex]; f.io.hidden = el.value !== '__o'; if (op && op.dataset.v) f.v.value = op.dataset.v; return; }
     if (el.dataset.a === 'cfg') { localStorage.setItem('sf_' + el.dataset.k, el.value); return render(); }
     if (el.dataset.a === 'ent') { await tk('sf_entregador', { p_id: el.dataset.id, p_nome: el.value }); await pull(); }
@@ -2681,6 +2769,10 @@ window.SF_SEED_PRODUCTS = [
     if (k === 'setup') return enter(await rpc('sf_setup', { p_n: x.n, p_e: x.e, p_s: x.p }));
     if (k === 'login') return enter(await rpc('sf_login', { p_e: x.e, p_s: x.p }));
     if (k === 'rast') { var r = await rpc('sf_rastrear', { p_id: f.dataset.id, p_tel: x.q }); err(''); $('#sf-r').innerHTML = '<p>Olá, ' + E(r.c) + '! ' + badge(r.s) + '</p>' + tl(r) + '<small>Previsão: ' + E((r.d || '').replace('T', ' ')) + '</small>'; return; }
+    var done = async function () { $('#sf-m').innerHTML = ''; await pull(); render(); };
+    if (k === 'func') { x.ativo = x.ativo !== 'false'; await tk('sf_func_salvar', { p: x }); return done(); }
+    if (k === 'folha') { x.pago = !!x.pago; await tk('sf_folha_salvar', { p: x }); return done(); }
+    if (k === 'desp') { await tk('sf_desp_salvar', { p: x }); return done(); }
     if (k === 'novo') {
       if (x.d === DEF) x.d = minDT();
       if (new Date(x.d) < new Date(Date.now() + 3540000)) return alert('A data e a hora devem ser de pelo menos 1 hora a partir de agora.');
@@ -2694,7 +2786,7 @@ window.SF_SEED_PRODUCTS = [
     if (k === 'user') { await tk('sf_usuario_criar', { p_n: x.n, p_e: x.e, p_s: x.p, p_r: x.r }); await pull(); return render(); }
   }
   function init() {
-    root = document.createElement('div'); root.id = 'sf-app'; root.hidden = true; document.body.appendChild(root);
+    root = document.createElement('div'); root.id = 'sf-app'; root.hidden = true; root.classList.toggle('sf-dark', DK); document.body.appendChild(root);
     var fb = document.querySelector('.footer__bottom'), b = document.createElement('button');
     b.className = 'sf-entry'; b.textContent = 'Acesso interno'; b.setAttribute('data-a', 'open'); var so = document.querySelector('.footer__social'); if (so) so.insertAdjacentElement('afterend', b); else (fb || document.body).appendChild(b);
     document.addEventListener('click', function (ev) { hc(ev).catch(fail); });
