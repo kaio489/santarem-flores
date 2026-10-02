@@ -790,6 +790,34 @@ html:not(.js-ready) .reveal { animation: reveal-fallback .01s 3s forwards; }
 .sf-g + .sf-kc, .sf-alert + .sf-g + .sf-kc { margin-top: 18px; }
 .sf-alert + .sf-g { margin-bottom: 4px; }
 
+/* 24 · ajustes de celular */
+#sf-app { overflow-x: hidden; }
+.sf-g { grid-template-columns: repeat(auto-fill, minmax(min(100%, 270px), 1fr)); }
+.sf-kc { grid-template-columns: repeat(auto-fit, minmax(min(100%, 250px), 1fr)); }
+.sf-cols { gap: 3px; }
+.sf-cols > div { min-width: 0; }
+.sf-cols > div small { font-size: .65rem; min-height: 1em; }
+.sf-cols > div span { font-size: .64rem; white-space: nowrap; }
+.sf-cols i { min-height: 3px; }
+.sf-chart { min-width: 0; overflow: hidden; }
+.sf-t, .sf-tb, .sf-f { max-width: 100%; }
+@media (max-width: 720px) {
+  .sf-c { padding: 16px 12px 70px; }
+  .sf-h { gap: 8px; padding: 10px 12px; flex-wrap: wrap; }
+  .sf-h b { font-size: .95rem; }
+  .sf-h span { flex: 1 1 100%; order: 5; font-size: .78rem; }
+  .sf-h button { padding: 6px 12px; white-space: nowrap; }
+  .sf-h b { flex: 1; }
+  .sf-n { padding: 8px 10px; }
+  .sf-ph { margin-bottom: 14px; }.sf-ph h1 { font-size: 1.3rem; }.sf-pi { width: 46px; height: 46px; }
+  .sf-chart { padding: 14px; }
+  .sf-cols > div:nth-child(even) span { visibility: hidden; }
+  .sf-donut > div { width: 108px; height: 108px; }.sf-donut > div b { width: 66px; height: 66px; }
+  .kc { padding: 14px; }.kc b { font-size: 1.3rem; }
+  .sf-tb input, .sf-tb select { min-width: 0; flex: 1 1 100%; }
+  .sf-pg { justify-content: center; }
+}
+
 </style>
 </head>
 <body>
