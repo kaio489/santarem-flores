@@ -1004,6 +1004,27 @@ html:not(.js-ready) .reveal { animation: reveal-fallback .01s 3s forwards; }
   .sf-md h3 { font-size: 1.2rem; }
 }
 
+/* 34 · carrinho: encaixe total no celular (inclusive iPhone) */
+html:has(#order[open]) { overflow: hidden; }
+#order { overscroll-behavior: contain; }
+.oc__b { overscroll-behavior: contain; -webkit-overflow-scrolling: touch; }
+.oc__fl input, .oc__fl textarea { font-size: 16px; min-width: 0; max-width: 100%; box-sizing: border-box; }
+.oc__fl input[type="datetime-local"] { -webkit-appearance: none; appearance: none; display: block; width: 100%; min-height: 52px; text-align: left; }
+.oc__fl input[type="datetime-local"]::-webkit-date-and-time-value { text-align: left; }
+.oc, .oc__b, .oc__f, .oc__h { box-sizing: border-box; max-width: 100%; }
+.oc__it { grid-template-columns: 68px minmax(0, 1fr) auto; gap: 10px; }
+.oc__it img { width: 68px; height: 68px; }
+.oc__lt { font-size: .95rem; }
+@media (max-width: 720px) {
+  #order { position: fixed; inset: 0; width: 100%; height: 100%; max-width: none; max-height: none; margin: 0; border-radius: 0; }
+  @supports (height: 100dvh) { #order { height: 100dvh; } }
+  .oc__h { padding: calc(14px + env(safe-area-inset-top)) 16px 6px; }
+  .oc__t { font-size: 1.5rem; }
+  .oc__b { padding: 8px 16px 14px; }
+  .oc__f { padding: 12px 16px calc(14px + env(safe-area-inset-bottom)); }
+  .oc__2 { gap: 10px; }
+}
+
 </style>
 </head>
 <body>
@@ -2656,6 +2677,66 @@ window.SF_SEED_PRODUCTS = [
     var p = ps.filter(function (x) { return SF.plainName(x.name).toLowerCase() === String(its[0].n).toLowerCase(); })[0];
     var more = its.length > 1 ? '<span class="sf-more">+' + (its.length - 1) + ' item(ns)</span>' : '';
     return '<div class="sf-pw">' + (p && p.image ? '<img class="sf-pic" alt="' + E(its[0].n) + '" src="' + E(p.image) + '">' : '<div class="sf-pic sf-nopic">📷 sem foto — confira o item</div>') + more + '</div>';
+  }
+  function ym(d) { return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0'); }
+  var MS = ym(new Date());
+  function ml(m) { var p = m.split('-'); return new Date(+p[0], +p[1] - 1, 1).toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' }); }
+  function fee(o) { return o.tx != null ? +o.tx || 0 : o.e === 'Entrega' ? 20 : 0; }
+  function tot(o) { return (+o.v || 0) + fee(o); }
+  function nm(x) { return +x || 0; }
+  function sm(l, f) { return l.reduce(function (t, x) { return t + f(x); }, 0); }
+  var TL = { mensal: 'Mensal (salário fixo)', diarista: 'Diarista (por diária)', entregador: 'Entregador (por entrega)', prestador: 'Prestador de serviço (por serviço)' };
+  function fOf(id) { return FN.f.filter(function (z) { return z.id === id; })[0]; }
+  function liq(r) { var f = fOf(r.func_id), base = !f || !f.tipo || f.tipo === 'mensal' ? nm(r.salario) : nm(r.salario) * nm(r.qtd); return base + nm(r.extras) + nm(r.bonus) - nm(r.descontos); }
+  function bsT(f, r) { var t = f.tipo || 'mensal', v = r ? r.salario : f.salario; return t === 'mensal' ? R(v) : R(v) + ' × ' + (r ? nm(r.qtd) : 0) + ' ' + { diarista: 'dia(s)', entregador: 'entrega(s)', prestador: 'serviço(s)' }[t]; }
+  function entMes(n, m) { return D.o.filter(function (o) { var h = o.h.filter(function (x) { return x[0] === 4; })[0]; return o.en === n && o.s === 4 && h && ym(new Date(h[1])) === m; }).length; }
+  function vM(m) { return D.o.filter(function (o) { return recv(o) && o.s !== 5 && ym(new Date(o.t0)) === m; }); }
+  function fM(m) { return sm(FN.p.filter(function (r) { return r.mes === m; }), liq); }
+  function entDone(o) { var h = (o.h || []).filter(function (x) { return x[0] === 4; })[0]; return o.s === 4 && o.e === 'Entrega' && o.en && h ? h[1] : 0; }
+  function dFee(m) { return sm(D.o.filter(function (o) { var t = entDone(o); return t && ym(new Date(t)) === m; }), function (o) { return fee(o); }); }
+  function wk(t) { var d = new Date(t); d.setDate(d.getDate() - (d.getDay() + 6) % 7); return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); }
+  var REPS = [];
+  function repasseHtml() {
+    var mp = {}; D.o.forEach(function (o) { var t = entDone(o); if (!t) return; var k = o.en + '|' + wk(t), x = mp[k] || (mp[k] = { e: o.en, s: wk(t), n: 0, v: 0 }); x.n++; x.v += fee(o); });
+    REPS = Object.keys(mp).map(function (k) { var x = mp[k], r = FN.r.filter(function (z) { return z.e === x.e && z.s === x.s; })[0]; x.pago = !!(r && r.pago); return x; }).sort(function (a, b) { return a.s < b.s ? 1 : a.s > b.s ? -1 : a.e.localeCompare(b.e); });
+    var f = function (d) { return d.split('-').reverse().slice(0, 2).join('/'); };
+    return '<h3>Repasse semanal aos entregadores</h3><p class="sf-note">Cada entrega finalizada vira despesa automática (taxa de entrega) e entra no acerto da semana (segunda a domingo) do entregador.</p><div class="sf-t o"><table><tr><th>Semana</th><th>Entregador</th><th>Entregas</th><th>A receber</th><th>Status</th><th></th></tr>' + (REPS.map(function (x, i) {
+      var fim = new Date(x.s + 'T00:00:00'); fim.setDate(fim.getDate() + 6);
+      return '<tr><td data-l="Semana">' + f(x.s) + ' a ' + String(fim.getDate()).padStart(2, '0') + '/' + String(fim.getMonth() + 1).padStart(2, '0') + '</td><td data-l="Entregador"><b>' + E(x.e) + '</b></td><td data-l="Entregas">' + x.n + '</td><td data-l="A receber"><b>' + R(x.v) + '</b></td><td data-l="Status">' + (x.pago ? '<span class="sf-s s4">Pago</span>' : '<span class="sf-s s1">A pagar</span>') + '</td><td><button class="sf-b s y" data-a="rep" data-ri="' + i + '">' + (x.pago ? 'Desfazer' : 'Marcar pago') + '</button></td></tr>';
+    }).join('') || '<tr><td>Nenhuma entrega finalizada ainda.</td></tr>') + '</table></div>';
+  }
+  function dM(m) { return dFee(m) + sm(FN.d.filter(function (x) { return x.dia.slice(0, 7) === m; }), function (x) { return nm(x.valor); }); }
+  function bar(v, mx, c) { return '<div class="sf-bar"><i class="' + (c || '') + '" style="width:' + (mx > 0 ? Math.max(2, Math.round(v / mx * 100)) : 0) + '%"></i></div>'; }
+  var PH = { painel: ['📊', 'Painel', 'Visão geral da operação, alertas e gráficos'], vendas: ['🧾', 'Vendas', 'Controle de pedidos, pagamentos e contatos pendentes'], producao: ['🌸', 'Produção', 'Fila priorizada por horário de entrega'], entregas: ['🛵', 'Entregas', 'Rotas, entregadores e confirmações'], estoque: ['📦', 'Estoque', 'Flores e insumos com alerta de mínimo'], financeiro: ['💰', 'Financeiro', 'Vendas, despesas, folha e resultado do mês'], folha: ['👥', 'Folha de pagamento', 'Funcionários, diaristas, entregadores e prestadores'], despesas: ['💳', 'Despesas', 'Lançamentos e custos por categoria'], rastreio: ['🔎', 'Rastreio', 'Acompanhe cada pedido'], catalogo: ['🌷', 'Catálogo', 'Produtos exibidos no site'], usuarios: ['🔐', 'Usuários e senhas', 'Acessos da equipe'] };
+  function head(t) { var h = PH[t]; return h ? '<div class="sf-ph"><span class="sf-pi">' + h[0] + '</span><div><h1>' + h[1] + '</h1><p>' + h[2] + '</p></div></div>' : ''; }
+  function kc(ic, t, v, tab, tone) { return '<div class="kc ' + (tone || '') + '"' + (tab ? ' data-a="tab" data-v="' + tab + '"' : '') + '><span class="ki">' + ic + '</span><div><small>' + t + '</small><b>' + v + '</b></div></div>'; }
+  function cols(vals, labs, c) { var mx = Math.max.apply(null, vals.concat([1])); return '<div class="sf-cols">' + vals.map(function (v, i) { return '<div><small>' + (v || '') + '</small><i class="' + (c || '') + '" style="height:' + Math.max(3, v / mx * 100) + '%"></i><span>' + labs[i] + '</span></div>'; }).join('') + '</div>'; }
+  function donut(parts) {
+    var tot2 = sm(parts, function (p) { return p[1]; }), a = 0, g = parts.map(function (p) { var st = a; a += tot2 ? p[1] / tot2 * 100 : 0; return p[2] + ' ' + st + '% ' + a + '%'; }).join(',');
+    return '<div class="sf-donut"><div style="background:' + (tot2 ? 'conic-gradient(' + g + ')' : '#e6dccb') + '"><b>' + tot2 + '</b></div><ul>' + parts.map(function (p) { return '<li><i style="background:' + p[2] + '"></i>' + p[0] + ' <b>' + p[1] + '</b></li>'; }).join('') + '</ul></div>';
+  }
+  function pendBox() {
+    var po = D.o.filter(function (o) { return !paid(o) && o.s < 5; });
+    if (!po.length && !LD.length) return '';
+    var ago = function (t) { var m = Math.max(0, Math.round((Date.now() - t) / 60000)); return m < 60 ? m + ' min' : m < 1440 ? Math.floor(m / 60) + ' h' : Math.floor(m / 1440) + ' dia(s)'; };
+    var wl = function (tel, txt) { var t = String(tel || '').replace(/\D/g, ''); if (t.length <= 11) t = '55' + t; return 'https://wa.me/' + t + '?text=' + encodeURIComponent(txt); };
+    var card = function (tag, nome, tel, item, val, t, btns, link) { return '<div class="sf-card pend"><div class="sf-row"><b>' + tag + '</b><span class="sf-s s1">há ' + ago(t) + '</span></div><div><b>' + E(nome) + '</b> · ' + E(tel) + '</div><p>' + E(item) + ' · ' + R(val) + '</p><div class="sf-row"><a class="sf-b s y" target="_blank" rel="noopener" href="' + link + '">💬 Chamar no WhatsApp</a>' + btns + '</div></div>'; };
+    return '<div class="sf-alert bad">🔥 Faltou só o pagamento: ' + po.length + ' pedido(s) e ' + LD.length + ' cliente(s) que não finalizaram. Entre em contato para continuar a venda.</div><div class="sf-g">' +
+      po.map(function (o) { return card('Pedido ' + o.id, o.c, o.t, o.i, tot(o), o.t0, '<button class="sf-b s" data-a="pgok" data-id="' + o.id + '">Confirmar pagamento</button>', wl(o.t, 'Olá, ' + String(o.c).split(' ')[0] + '! Aqui é da Santarém Flores. Seu pedido ' + o.id + ' (' + o.i + ') está quase pronto: falta só o pagamento. Podemos ajudar?')); }).join('') +
+      LD.map(function (l) { return card('🛒 Não finalizou', l.c, l.t, l.i, l.v, l.criado, '<button class="sf-b s" data-a="ldst" data-lid="' + l.id + '" data-st="atendido">Atendido</button><button class="sf-b s r" data-a="ldst" data-lid="' + l.id + '" data-st="descartado">Descartar</button>', wl(l.t, 'Olá, ' + String(l.c).split(' ')[0] + '! Aqui é da Santarém Flores. Vimos que você começou um pedido de ' + l.i + ' e não finalizou. Posso te ajudar a concluir?')); }).join('') + '</div>';
+  }
+  function mesel() { return '<label>Mês <input class="sf-s2" style="width:auto" type="month" value="' + MS + '" data-a="mes"></label>'; }
+  function modal(h) { $('#sf-m').innerHTML = '<div class="sf-mo" data-a="mx"><div class="sf-md"><button class="sf-mx" data-a="mc" aria-label="Fechar">✕</button>' + h + '<button class="sf-l" data-a="mc">Cancelar</button></div></div>'; }
+  function inp(n, ph, v, t, x) { return '<input name="' + n + '" placeholder="' + ph + '" title="' + ph + '" value="' + E(v == null ? '' : v) + '" type="' + (t || 'text') + '" ' + (x || '') + '>'; }
+  function ffm(f) {
+    f = f || { ativo: true };
+    return '<h3 style="margin:0">' + (f.id ? 'Editar funcionário' : 'Novo funcionário') + '</h3><form class="sf-f" data-f="func" style="grid-template-columns:1fr"><input type="hidden" name="id" value="' + (f.id || '') + '"><input type="hidden" name="ativo" value="' + (f.ativo !== false) + '">' +
+      inp('nome', 'Nome completo', f.nome, 'text', 'required') + inp('cargo', 'Cargo / função', f.cargo) + '<label>Como é pago <select name="tipo">' + Object.keys(TL).filter(function (k) { return k !== 'entregador' || f.tipo === 'entregador'; }).map(function (k) { return '<option value="' + k + '" ' + ((f.tipo || 'mensal') === k ? 'selected' : '') + '>' + TL[k] + '</option>'; }).join('') + '</select></label>' + inp('tel', 'Telefone', f.tel) + inp('pix', 'Chave PIX', f.pix) + inp('salario', 'Valor base (R$): salário, diária, valor por entrega ou por serviço', f.salario, 'number', 'step="0.01" min="0" required') + '<label>Admissão ' + inp('admissao', 'Admissão', f.admissao, 'date') + '</label>' + inp('obs', 'Observações', f.obs) + '<button class="sf-b">Salvar</button></form>';
+  }
+  function lfm(fid) {
+    var f = FN.f.filter(function (x) { return x.id === fid; })[0], r = FN.p.filter(function (x) { return x.func_id === fid && x.mes === MS; })[0] || { salario: f.salario, qtd: f.tipo === 'entregador' ? entMes(f.nome, MS) : f.tipo === 'mensal' || !f.tipo ? 1 : 0, extras: 0, bonus: 0, descontos: 0, pago: false };
+    return '<h3 style="margin:0">' + E(f.nome) + ' · ' + ml(MS) + '</h3><form class="sf-f" data-f="folha" style="grid-template-columns:1fr"><input type="hidden" name="func_id" value="' + fid + '"><input type="hidden" name="mes" value="' + MS + '">' +
+      '<label>' + (!f.tipo || f.tipo === 'mensal' ? 'Salário' : 'Valor por ' + { diarista: 'diária', entregador: 'entrega', prestador: 'serviço' }[f.tipo] + ' (R$)') + inp('salario', 'Valor', r.salario, 'number', 'step="0.01" min="0"') + '</label>' + (!f.tipo || f.tipo === 'mensal' ? '<input type="hidden" name="qtd" value="1">' : '<label>' + { diarista: 'Dias trabalhados', entregador: 'Entregas feitas', prestador: 'Serviços realizados' }[f.tipo] + inp('qtd', 'Quantidade', r.qtd, 'number', 'step="0.5" min="0"') + '</label>') + '<label>Horas extras / comissão ' + inp('extras', 'Extras', r.extras, 'number', 'step="0.01" min="0"') + '</label><label>Bônus ' + inp('bonus', 'Bônus', r.bonus, 'number', 'step="0.01" min="0"') + '</label><label>Descontos (vales, faltas, INSS...) ' + inp('descontos', 'Descontos', r.descontos, 'number', 'step="0.01" min="0"') + '</label>' + inp('obs', 'Observações', r.obs) + '<label><input type="checkbox" name="pago" value="1" ' + (r.pago ? 'checked' : '') + '> Já foi pago</label><button class="sf-b">Salvar lançamento</button></form>';
   }
   function paid(o) { return ['aguardando', 'a_combinar'].indexOf(o.pg || 'pago') < 0; }
   function recv(o) { return (o.pg || 'pago') === 'pago' || (o.pg === 'na_entrega' && o.s === 4); }
