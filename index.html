@@ -1025,6 +1025,22 @@ html:has(#order[open]) { overflow: hidden; }
   .oc__2 { gap: 10px; }
 }
 
+/* 35 · cabeçalho compacto com carrinho + WhatsApp fixos, catálogo mais acima */
+:root { --header-h: 56px; }
+.header__inner { grid-template-columns: 48px 1fr auto; }
+.header__actions { display: flex; align-items: center; gap: 0; justify-self: end; position: relative; z-index: 2; }
+.header__actions .header__wa { grid-column: auto; width: 44px; height: 44px; }
+#cart-btn { position: relative; width: 44px; height: 44px; display: grid; place-items: center; border: 0; background: none; cursor: pointer; color: inherit; padding: 0; }
+#cart-btn .icon { width: 25px; height: 25px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+#cart-btn b { position: absolute; top: 3px; right: 1px; min-width: 18px; height: 18px; border-radius: 9px; background: #351e16; color: #fff; font-size: .68rem; font-weight: 500; display: grid; place-items: center; padding: 0 4px; }
+#cart-btn b[hidden] { display: none; }
+.brand img { width: 40px; height: 40px; }
+@media (min-width: 1080px) { .header__inner { grid-template-columns: 56px 1fr auto; } .header__actions { grid-column: 3; grid-row: 1; } }
+#buques { padding-top: 6px; }
+#buques .all { padding-top: 0; }
+#buques .all__head { padding-top: 6px; margin-top: 0; }
+#buques .sec-head { display: none; }
+
 </style>
 </head>
 <body>
@@ -1413,11 +1429,11 @@ window.SF_SEED_PRODUCTS = [
     if (d.length === 10) return `(${d.slice(0, 2)}) ${d.slice(2, 6)}-${d.slice(6)}`;
     return '';
   }
-  const MSG_GENERAL = 'Olá! Vim pelo site da Santarém Flores e gostaria de conhecer os buquês e presentes.';
+  const MSG_GENERAL = 'Olá! 🌸 Vim pelo site da Santarém Flores e gostaria de conhecer os buquês e presentes. Pode me ajudar? 😊';
   function productMessage(p) {
-    if (!p.available) return `Olá! Vim pelo site da Santarém Flores e queria saber quando o ${p.name} estará disponível.`;
-    if (p.price != null) return `Olá! Vim pelo site da Santarém Flores e tenho interesse no ${p.name} no valor de ${BRL.format(p.price)}.`;
-    return `Olá! Vim pelo site da Santarém Flores e gostaria de saber mais sobre o ${p.name}.`;
+    if (!p.available) return `Olá! 🌸 Vim pelo site da Santarém Flores e queria saber quando o ${p.name} estará disponível. 😊`;
+    if (p.price != null) return `Olá! 🌸 Vim pelo site da Santarém Flores e tenho interesse no ${p.name} (${BRL.format(p.price)}). 💐 Ele está disponível?`;
+    return `Olá! 🌸 Vim pelo site da Santarém Flores e gostaria de saber mais sobre o ${p.name}. 💐`;
   }
 
   /* 3 · DADOS --------------------------------------------------------- */
@@ -1946,11 +1962,8 @@ window.SF_SEED_PRODUCTS = [
   const { $, esc, BRL, plainName } = SF, DB = window.SF_DB, PAY = window.SF_PAY || { enabled: false };
   /* gateway futuro: window.SF_PAY = { enabled: true, start({ id, amount, method, name, phone }) -> { checkoutUrl } ou { pixCode } } */
   const FEE = 20, KEY = 'sf:cart', dlg = $('#order'), inner = $('#order-inner');
-  let cart = [], S = { step: 'cart', f: { mode: '', dt: '', ci: 'Santarém' }, dirty: false, lead: 0 };
+  let cart = [], S = { step: 'cart', f: { mode: '', ci: 'Santarém' }, lead: 0 };
   try { cart = JSON.parse(localStorage.getItem(KEY) || '[]').filter((x) => x && x.id); } catch (_) { cart = []; }
-  const pad = (n) => String(n).padStart(2, '0');
-  const minDT = () => { const d = new Date(Math.ceil((Date.now() + 3600000) / 60000) * 60000); return d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate()) + 'T' + pad(d.getHours()) + ':' + pad(d.getMinutes()); };
-  const fmt = (s) => new Date(s).toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' });
   const rpc = (fn, a) => fetch(DB.url + '/rest/v1/rpc/' + fn, { method: 'POST', headers: { apikey: DB.key, 'Content-Type': 'application/json' }, body: JSON.stringify(a || {}) })
     .then(async (r) => { const j = await r.json().catch(() => null); if (!r.ok) throw new Error((j && j.message) || String(r.status)); return j; });
   const count = () => cart.reduce((t, x) => t + x.qty, 0), sub = () => cart.reduce((t, x) => t + (x.price || 0) * x.qty, 0);
@@ -1959,11 +1972,13 @@ window.SF_SEED_PRODUCTS = [
   const save = () => { try { localStorage.setItem(KEY, JSON.stringify(cart)); } catch (_) { /* ignora */ } badge(); };
 
   /* botão do carrinho no cabeçalho */
-  function badge() { const b = $('#cart-btn'); if (!b) return; const n = count(); b.querySelector('b').textContent = n; b.hidden = n === 0; }
+  function badge() { const b = $('#cart-btn'); if (!b) return; const n = count(), c = b.querySelector('b'); c.textContent = n; c.hidden = n === 0; }
   (function mount() {
-    const anchor = document.querySelector('.header__wa'); if (!anchor) return;
-    const b = document.createElement('button'); b.id = 'cart-btn'; b.type = 'button'; b.hidden = true; b.setAttribute('aria-label', 'Abrir carrinho'); b.innerHTML = '🛒<b>0</b>';
-    anchor.parentNode.insertBefore(b, anchor); b.addEventListener('click', () => { S.step = 'cart'; render(); open(); }); badge();
+    const wa = document.querySelector('.header__wa'); if (!wa) return;
+    const box = document.createElement('div'); box.className = 'header__actions';
+    const b = document.createElement('button'); b.id = 'cart-btn'; b.type = 'button'; b.setAttribute('aria-label', 'Abrir carrinho'); b.innerHTML = '<svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 4h2l2.2 10.2a1 1 0 0 0 1 .8h8.6a1 1 0 0 0 1-.8L19.5 8H6.2"/><circle cx="9" cy="19" r="1.4"/><circle cx="17" cy="19" r="1.4"/></svg><b hidden>0</b>';
+    wa.parentNode.insertBefore(box, wa); box.appendChild(b); box.appendChild(wa);
+    b.addEventListener('click', () => { S.step = 'cart'; render(); open(); }); badge();
   })();
 
   const open = () => { if (!dlg.open) dlg.showModal(); };
@@ -1996,10 +2011,9 @@ window.SF_SEED_PRODUCTS = [
   function rData() {
     const f = S.f, v = (k) => esc(f[k] || '');
     shell('Seus dados', 'Preencha para finalizar o pedido.', `
+      <fieldset class="oc__tp"><legend>Tipo de pedido *</legend><label><input type="radio" name="mode" value="delivery" ${f.mode === 'delivery' ? 'checked' : ''}><span>Entrega</span></label><label><input type="radio" name="mode" value="pickup" ${f.mode === 'pickup' ? 'checked' : ''}><span>Retirada</span></label></fieldset>
       <label class="oc__fl"><span>Nome *</span><input name="name" type="text" autocomplete="name" maxlength="80" placeholder="Seu nome" value="${v('name')}"></label>
       <label class="oc__fl"><span>Telefone (WhatsApp) *</span><input name="phone" type="tel" autocomplete="tel" maxlength="20" placeholder="(93) 9 0000-0000" value="${v('phone')}"></label>
-      <fieldset class="oc__tp"><legend>Tipo de pedido *</legend><label><input type="radio" name="mode" value="delivery" ${f.mode === 'delivery' ? 'checked' : ''}><span>Entrega</span></label><label><input type="radio" name="mode" value="pickup" ${f.mode === 'pickup' ? 'checked' : ''}><span>Retirada</span></label></fieldset>
-      <label class="oc__fl oc__red"><span id="oc-dtl">Data e hora *</span><input name="dt" type="datetime-local" min="${minDT()}" value="${esc(f.dt || minDT())}"></label>
       <div id="oc-del" ${f.mode === 'delivery' ? '' : 'hidden'}>
         <label class="oc__fl"><span>Nome de quem vai receber *</span><input name="rn" type="text" maxlength="80" placeholder="Nome do destinatário" value="${v('rn')}"></label>
         <label class="oc__fl"><span>Telefone de quem vai receber *</span><input name="rt" type="tel" maxlength="20" placeholder="(93) 9 0000-0000" value="${v('rt')}"></label>
@@ -2014,20 +2028,15 @@ window.SF_SEED_PRODUCTS = [
   }
 
   function rPay() {
-    const del = isDel(), onl = PAY.enabled;
-    shell('Resumo do pedido', `${esc(itemsText())}<br>${del ? 'Entrega' : 'Retirada'} · ${fmt(S.f.dt)}`, `
+    const del = isDel();
+    shell('Resumo do pedido', `${esc(itemsText())}<br>${del ? '🚚 Entrega' : '🏪 Retirada'}`, `
       <div class="oc__sum"><div><span>Produtos</span><b>${BRL.format(sub())}</b></div>${del ? `<div><span>Taxa de entrega (Santarém)</span><b>${BRL.format(FEE)}</b></div>` : ''}<div class="oc__sumt"><span>Total</span><b>${BRL.format(total())}</b></div></div>
-      <p class="oc__h3">Como você quer pagar?</p>
-      ${onl ? '<button class="oc__opt oc__opt--on" type="button" data-act="pay" data-m="pix"><b>PIX</b><small>Pague agora pelo site</small></button><button class="oc__opt oc__opt--on" type="button" data-act="pay" data-m="card"><b>Cartão de crédito</b><small>Pague agora pelo site</small></button>' : ''}
-      <button class="oc__opt" type="button" data-act="pay" data-m="atend"><b>💬 Pagar com atendente</b><small>Um atendente finaliza o pagamento no WhatsApp</small></button>
-      <button class="oc__opt" type="button" data-act="pay" data-m="wpp"><b>✅ Finalizar pelo WhatsApp</b><small>Envia o resumo do pedido para a loja</small></button>
-      <button class="oc__opt" type="button" data-act="pay" data-m="cod"><b>💵 Pagar na ${del ? 'entrega' : 'retirada'}</b><small>Você paga quando receber</small></button>`,
-      '<button class="oc__back" type="button" data-act="tdata">← Voltar aos dados</button>');
+      <p class="oc__note">📅 A data e o horário ${del ? 'da entrega' : 'da retirada'} são combinados com o atendente no WhatsApp.</p>`,
+      '<button class="oc__go oc__go--wa" type="button" data-act="pay" data-m="atend">💬 Pagar com atendente (WhatsApp)</button><button class="oc__back" type="button" data-act="tdata">← Voltar aos dados</button>');
   }
 
-  function rDone(id, m) {
-    const msg = m === 'cod' ? `O pagamento será feito na ${isDel() ? 'entrega' : 'retirada'} e a loja já vai preparar o seu pedido.` : m === 'atend' ? 'Um atendente vai finalizar o pagamento com você pelo WhatsApp.' : m === 'wpp' ? 'Enviamos o resumo para a loja pelo WhatsApp.' : 'A produção começa assim que o pagamento for confirmado.';
-    shell('Pedido registrado!', '', `<div class="oc__done"><p>Seu pedido <strong>${esc(id)}</strong> foi registrado para <strong>${fmt(S.f.dt)}</strong>.</p><p>${msg}</p><p>As atualizações chegam pelo seu celular (WhatsApp).</p></div>`, `${m === 'atend' || m === 'wpp' ? `<a class="oc__go oc__go--wa" target="_blank" rel="noopener" href="${waLink(id, m)}">Abrir WhatsApp</a>` : ''}<button class="oc__ghost" type="button" data-act="close">Fechar</button>`);
+  function rDone(id) {
+    shell('Pedido registrado! 🌸', '', `<div class="oc__done"><p>Seu pedido <strong>${esc(id)}</strong> foi registrado.</p><p>Um atendente vai finalizar o pagamento e combinar a data e o horário com você pelo WhatsApp. 💬</p><p>Se a conversa não abriu, toque no botão abaixo.</p></div>`, `<a class="oc__go oc__go--wa" target="_blank" rel="noopener" href="${waLink(id)}">Abrir WhatsApp</a><button class="oc__ghost" type="button" data-act="close">Fechar</button>`);
   }
 
   /* ---------- lógica ---------- */
@@ -2036,12 +2045,9 @@ window.SF_SEED_PRODUCTS = [
   }
   function validate() {
     const f = S.f, d = (s) => String(s || '').replace(/\D/g, '').length;
-    if (!S.dirty) f.dt = minDT();
+    if (!f.mode) return 'Escolha entre entrega e retirada.';
     if (!f.name) return 'Informe o seu nome.';
     if (d(f.phone) < 10) return 'Informe seu telefone com DDD.';
-    if (!f.mode) return 'Escolha entre entrega e retirada.';
-    if (!f.dt) return 'Escolha a data e a hora.';
-    if (new Date(f.dt) < new Date(minDT())) return 'Escolha um horário a partir de ' + fmt(minDT()) + ' (mínimo 1 hora de antecedência).';
     if (f.mode === 'delivery') {
       if (!f.rn) return 'Informe o nome de quem vai receber.';
       if (d(f.rt) < 10) return 'Informe o telefone de quem vai receber, com DDD.';
@@ -2052,35 +2058,32 @@ window.SF_SEED_PRODUCTS = [
   }
   function leadNow() {
     if (S.lead) return; const f = S.f;
-    rpc('sf_lead_criar', { p: { c: f.name, t: f.phone, i: itemsText(), v: sub(), e: isDel() ? 'Entrega' : 'Retirada', d: f.dt, rn: f.rn, rt: f.rt } }).then((j) => { if (typeof j === 'number') S.lead = j; }).catch(() => {});
+    rpc('sf_lead_criar', { p: { c: f.name, t: f.phone, i: itemsText(), v: sub(), e: isDel() ? 'Entrega' : 'Retirada', rn: f.rn, rt: f.rt } }).then((j) => { if (typeof j === 'number') S.lead = j; }).catch(() => {});
   }
   function waNum() { const a = document.querySelector('[data-wa]'), m = a && /wa\.me\/(\d+)/.exec(a.href || ''); return m ? m[1] : ''; }
-  function waLink(id, m) {
-    const f = S.f, del = isDel(); let t;
-    if (m === 'atend') t = `Olá! Quero pagar o pedido ${id} com um atendente.\n${itemsText()}\nTotal: ${BRL.format(total())}`;
-    else t = `Olá! Pedido ${id}\n${itemsText()}\nNome: ${f.name}\n${del ? 'Entrega: ' + f.ru + ', ' + f.nu + (f.comp ? ' ' + f.comp : '') + ' - ' + f.ba + ', ' + f.ci : 'Retirada na loja'}\n${fmt(f.dt)}\nTotal: ${BRL.format(total())}`;
-    return 'https://wa.me/' + waNum() + '?text=' + encodeURIComponent(t);
+  function waLink(id) {
+    const f = S.f, del = isDel(), end = f.ru ? f.ru + ', ' + f.nu + (f.comp ? ' ' + f.comp : '') + ' - ' + f.ba + ', ' + (f.ci || 'Santarém') + (f.ref ? ' (' + f.ref + ')' : '') : '';
+    const L = ['Olá! 🌸 Quero finalizar o meu pedido com um atendente.', '',
+      '📦 Pedido ' + id, '🛍️ ' + itemsText(), '💰 Total: ' + BRL.format(total()) + (del ? ' (inclui entrega de ' + BRL.format(FEE) + ')' : ''), '',
+      del ? '🚚 Entrega para ' + f.rn : '🏪 Retirada na loja', del ? '📍 ' + end : '', '👤 ' + f.name + ' · ' + f.phone];
+    if (f.note) L.push('💌 Cartão: "' + f.note + '"');
+    L.push('', '📅 Podemos combinar o dia e o horário por aqui? 😊');
+    return 'https://wa.me/' + waNum() + '?text=' + encodeURIComponent(L.filter((x, i, a) => x !== '' || (a[i - 1] !== '' && i > 0)).join('\n'));
   }
   async function send(m, btn) {
     const f = S.f, del = isDel(), addr = f.ru ? f.ru + ', ' + f.nu + (f.comp ? ' ' + f.comp : '') + ' - ' + f.ba + ', ' + (f.ci || 'Santarém') + (f.ref ? ' (' + f.ref + ')' : '') : '';
-    const label = { atend: 'Com atendente', wpp: 'Pelo WhatsApp', cod: del ? 'Na entrega' : 'Na retirada', pix: 'Pix', card: 'Cartão' }[m] || 'A combinar';
+    const label = 'Com atendente';
     const t0 = btn && btn.innerHTML; if (btn) { btn.disabled = true; btn.innerHTML = '<b>Enviando…</b>'; }
     try {
-      const id = await rpc('sf_criar_pedido', { p: { c: f.name, t: f.phone, i: itemsText(), v: sub(), p: label, pg: m === 'cod' ? 'na_entrega' : undefined, e: del ? 'Entrega' : 'Retirada', a: del ? addr : '', ru: f.ru, nu: f.nu, ba: f.ba, d: f.dt, dz: new Date(f.dt).toISOString(), m: f.note, an: del && !!f.anon, rn: f.rn, rt: f.rt, lead: S.lead || undefined, itens: cart.map((x) => ({ n: x.name, q: x.qty, p: x.price || 0 })) } });
-      if (m === 'atend' || m === 'wpp') window.open(waLink(id, m), '_blank', 'noopener');
-      if ((m === 'pix' || m === 'card') && PAY.enabled && PAY.start) {
-        const r = await PAY.start({ id, amount: total(), method: m, name: f.name, phone: f.phone });
-        if (r && r.checkoutUrl) { location.href = r.checkoutUrl; return; }
-        if (r && r.pixCode) { shell('Pague com PIX', 'Copie o código e cole no app do seu banco.', `<textarea readonly rows="5" onclick="this.select()">${esc(r.pixCode)}</textarea><p class="oc__done">Pedido <strong>${esc(id)}</strong>. A produção começa assim que o pagamento for confirmado.</p>`, '<button class="oc__ghost" type="button" data-act="close">Fechar</button>'); cart = []; save(); return; }
-      }
-      rDone(id, m); cart = []; save(); S.lead = 0; S.dirty = false; S.f = { mode: '', dt: '', ci: 'Santarém' };
+      const id = await rpc('sf_criar_pedido', { p: { c: f.name, t: f.phone, i: itemsText(), v: sub(), p: label, e: del ? 'Entrega' : 'Retirada', a: del ? addr : '', ru: f.ru, nu: f.nu, ba: f.ba, m: f.note, an: del && !!f.anon, rn: f.rn, rt: f.rt, lead: S.lead || undefined, itens: cart.map((x) => ({ n: x.name, q: x.qty, p: x.price || 0 })) } });
+      window.open(waLink(id), '_blank', 'noopener');
+      rDone(id); cart = []; save(); S.lead = 0; S.f = { mode: '', ci: 'Santarém' };
     } catch (ex) {
       console.error('[pedido]', ex); if (btn) { btn.disabled = false; btn.innerHTML = t0; }
-      err(/antecedencia/.test(ex.message) ? 'Escolha um horário com pelo menos 1 hora de antecedência.' : /limite/.test(ex.message) ? 'Muitos pedidos deste telefone em pouco tempo. Tente mais tarde.' : 'Não foi possível enviar o pedido agora. Tente novamente.');
+      err(/limite/.test(ex.message) ? 'Muitos pedidos deste telefone em pouco tempo. Tente mais tarde.' : 'Não foi possível enviar o pedido agora. Tente novamente.');
     }
   }
 
-  inner.addEventListener('input', (e) => { if (e.target.name === 'dt') S.dirty = true; });
   inner.addEventListener('change', (e) => { if (e.target.name === 'mode') { S.f.mode = e.target.value; const d = $('#oc-del'); if (d) d.hidden = e.target.value !== 'delivery'; } });
   inner.addEventListener('click', (e) => {
     const a = e.target.closest('[data-act]'); if (!a) return; const act = a.dataset.act, i = +a.dataset.i;
@@ -2645,11 +2648,18 @@ window.SF_SEED_PRODUCTS = [
   function setS(o, s) { o.s = s; o.h.push([s, Date.now(), me.n]); sv(); }
   function adv(o) { setS(o, o.s === 2 && o.e !== 'Entrega' ? 4 : o.s + 1); }
   function lnk(o) { return location.href.split('#')[0] + '#r=' + o.id; }
-  function wa(o) {
-    var t = o.t.replace(/\D/g, ''); if (t.length <= 11) t = '55' + t;
-    var m = 'Olá, ' + o.c.split(' ')[0] + '! Seu pedido ' + o.id + ' na Santarém Flores está: ' + ST[o.s] + '.';
-    return 'https://wa.me/' + t + '?text=' + encodeURIComponent(m);
+  function waMsg(o) {
+    var n = String(o.c || '').split(' ')[0], r = o.e === 'Entrega', t = {
+      0: '✅ Recebemos o seu pedido ' + o.id + '! Já estamos cuidando dele com carinho. 🌷',
+      1: '🌸 O seu pedido ' + o.id + ' está sendo preparado com muito carinho!',
+      2: r ? '💐 O seu pedido ' + o.id + ' está prontinho e já já sai para entrega! 😊' : '💐 O seu pedido ' + o.id + ' está prontinho! Pode vir buscar quando quiser. 😊',
+      3: '🛵 O seu pedido ' + o.id + ' saiu para entrega! Fique de olho, já já chega. 😊',
+      4: r ? '🎉 O seu pedido ' + o.id + ' foi entregue! Obrigada por escolher a Santarém Flores. 💛' : '🎉 O seu pedido ' + o.id + ' foi retirado! Obrigada por escolher a Santarém Flores. 💛',
+      5: 'O seu pedido ' + o.id + ' foi cancelado. Qualquer dúvida, é só falar com a gente. 💬'
+    };
+    return 'Olá, ' + n + '! 🌸\n' + t[o.s] + (o.s === 4 ? '\nSe puder, conte para a gente o que achou! 🌻' : '');
   }
+  function wa(o) { var t = String(o.t || '').replace(/\D/g, ''); if (t.length <= 11) t = '55' + t; return 'https://wa.me/' + t + '?text=' + encodeURIComponent(waMsg(o)); }
   function tl(o) {
     var steps = [0, 1, 2].concat(o.e === 'Entrega' ? [3] : []).concat([4]);
     var li = steps.map(function (s) { var h = o.h.filter(function (x) { return x[0] === s; })[0]; return '<li class="' + (h ? 'ok' : '') + '">' + ST[s === 4 && o.e !== 'Entrega' ? 4 : s].replace('Entregue', o.e === 'Entrega' ? 'Entregue' : 'Retirado') + (h ? '<small>' + F(h[1]) + '</small>' : '') + '</li>'; }).join('');
@@ -2658,7 +2668,7 @@ window.SF_SEED_PRODUCTS = [
   }
   function cfg(k, d) { return Math.max(1, +localStorage.getItem('sf_' + k) || d); }
   function hm(t) { return new Date(t).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }); }
-  function dueOf(o) { return new Date(o.d).getTime(); }
+  function dueOf(o) { var t = new Date(o.d).getTime(); return isNaN(t) ? 8.64e15 : t; }
   function plan(n) {
     var free = [], out = {}, now = Date.now(), pm = cfg('pm', 30) * 60000, em = cfg('em', 30) * 60000, i;
     var due = function (o) { return dueOf(o) - (o.e === 'Entrega' ? em : 0); };
@@ -2670,8 +2680,8 @@ window.SF_SEED_PRODUCTS = [
     return out;
   }
   function needStaff() { for (var n = 1; n < 25; n++) { var p = plan(n); if (!Object.keys(p).some(function (k) { return p[k].risk && !p[k].late; })) return n; } return 25; }
-  function ctext(o) { var ms = dueOf(o) - Date.now(), m = Math.round(Math.abs(ms) / 60000), t = m >= 60 ? Math.floor(m / 60) + 'h' + String(m % 60).padStart(2, '0') : m + ' min'; return ms < 0 ? 'Atrasado ' + t : 'Faltam ' + t; }
-  function chip(o) { var ms = dueOf(o) - Date.now(); return '<span class="sf-s ' + (ms < 0 ? 's5' : ms < 3600000 ? 's3' : 's2') + '">' + ctext(o) + '</span>'; }
+  function ctext(o) { if (!o.d) return 'Data a combinar'; var ms = dueOf(o) - Date.now(), m = Math.round(Math.abs(ms) / 60000), t = m >= 60 ? Math.floor(m / 60) + 'h' + String(m % 60).padStart(2, '0') : m + ' min'; return ms < 0 ? 'Atrasado ' + t : 'Faltam ' + t; }
+  function chip(o) { if (!o.d) return '<span class="sf-s s1">⏰ Data a combinar</span>'; var ms = dueOf(o) - Date.now(); return '<span class="sf-s ' + (ms < 0 ? 's5' : ms < 3600000 ? 's3' : 's2') + '">' + ctext(o) + '</span>'; }
   function pic(o) {
     var ps = (window.SF && SF.listProducts && SF.listProducts()) || [], its = o.itens && o.itens.length ? o.itens : [{ n: o.i }];
     var p = ps.filter(function (x) { return SF.plainName(x.name).toLowerCase() === String(its[0].n).toLowerCase(); })[0];
@@ -2722,8 +2732,8 @@ window.SF_SEED_PRODUCTS = [
     var wl = function (tel, txt) { var t = String(tel || '').replace(/\D/g, ''); if (t.length <= 11) t = '55' + t; return 'https://wa.me/' + t + '?text=' + encodeURIComponent(txt); };
     var card = function (tag, nome, tel, item, val, t, btns, link) { return '<div class="sf-card pend"><div class="sf-row"><b>' + tag + '</b><span class="sf-s s1">há ' + ago(t) + '</span></div><div><b>' + E(nome) + '</b> · ' + E(tel) + '</div><p>' + E(item) + ' · ' + R(val) + '</p><div class="sf-row"><a class="sf-b s y" target="_blank" rel="noopener" href="' + link + '">💬 Chamar no WhatsApp</a>' + btns + '</div></div>'; };
     return '<div class="sf-alert bad">🔥 Faltou só o pagamento: ' + po.length + ' pedido(s) e ' + LD.length + ' cliente(s) que não finalizaram. Entre em contato para continuar a venda.</div><div class="sf-g">' +
-      po.map(function (o) { return card('Pedido ' + o.id, o.c, o.t, o.i, tot(o), o.t0, '<button class="sf-b s" data-a="pgok" data-id="' + o.id + '">Confirmar pagamento</button>', wl(o.t, 'Olá, ' + String(o.c).split(' ')[0] + '! Aqui é da Santarém Flores. Seu pedido ' + o.id + ' (' + o.i + ') está quase pronto: falta só o pagamento. Podemos ajudar?')); }).join('') +
-      LD.map(function (l) { return card('🛒 Não finalizou', l.c, l.t, l.i, l.v, l.criado, '<button class="sf-b s" data-a="ldst" data-lid="' + l.id + '" data-st="atendido">Atendido</button><button class="sf-b s r" data-a="ldst" data-lid="' + l.id + '" data-st="descartado">Descartar</button>', wl(l.t, 'Olá, ' + String(l.c).split(' ')[0] + '! Aqui é da Santarém Flores. Vimos que você começou um pedido de ' + l.i + ' e não finalizou. Posso te ajudar a concluir?')); }).join('') + '</div>';
+      po.map(function (o) { return card('Pedido ' + o.id, o.c, o.t, o.i, tot(o), o.t0, '<button class="sf-b s" data-a="pgok" data-id="' + o.id + '">Confirmar pagamento</button>', wl(o.t, 'Olá, ' + String(o.c).split(' ')[0] + '! 🌸 Aqui é da Santarém Flores.\nVimos o seu pedido ' + o.id + ' (' + o.i + ') e falta só o pagamento. 💳\nPosso te ajudar a finalizar? 😊')); }).join('') +
+      LD.map(function (l) { return card('🛒 Não finalizou', l.c, l.t, l.i, l.v, l.criado, '<button class="sf-b s" data-a="ldst" data-lid="' + l.id + '" data-st="atendido">Atendido</button><button class="sf-b s r" data-a="ldst" data-lid="' + l.id + '" data-st="descartado">Descartar</button>', wl(l.t, 'Olá, ' + String(l.c).split(' ')[0] + '! 🌸 Aqui é da Santarém Flores.\nVimos que você começou um pedido de ' + l.i + ' e ele não foi finalizado. 💐\nPosso te ajudar a concluir? 😊')); }).join('') + '</div>';
   }
   function mesel() { return '<label>Mês <input class="sf-s2" style="width:auto" type="month" value="' + MS + '" data-a="mes"></label>'; }
   function modal(h) { $('#sf-m').innerHTML = '<div class="sf-mo" data-a="mx"><div class="sf-md"><button class="sf-mx" data-a="mc" aria-label="Fechar">✕</button>' + h + '<button class="sf-l" data-a="mc">Cancelar</button></div></div>'; }
@@ -2743,7 +2753,7 @@ window.SF_SEED_PRODUCTS = [
   function pgb(o) { return o.pg === 'na_entrega' ? '<span class="sf-s s2">💵 Paga na ' + (o.e === 'Entrega' ? 'entrega' : 'retirada') + '</span>' : paid(o) ? '' : '<span class="sf-s s1">💳 ' + (o.pg === 'aguardando' ? 'Aguardando pagamento' : 'Pagamento a combinar') + '</span>'; }
   function who(o, st) { var h = o.h.filter(function (x) { return x[0] === st; })[0]; return h ? E(h[2]) + ' às ' + new Date(h[1]).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }) : ''; }
   function urg(o) { var t = new Date(o.d).getTime() - Date.now(); return isNaN(t) ? '' : t < 0 ? 'Atrasado' : t < 7200000 ? 'Urgente' : ''; }
-  function byD(a, b) { return String(a.d).localeCompare(String(b.d)); }
+  function byD(a, b) { return String(a.d || '9').localeCompare(String(b.d || '9')); }
   function mapsUrl(o) {
     var q = encodeURIComponent(o.a + ', Santarém - PA'), u = navigator.userAgent;
     return /iPhone|iPad|iPod/.test(u) ? 'https://maps.apple.com/?daddr=' + q : /Android/.test(u) ? 'geo:0,0?q=' + q : 'https://www.google.com/maps/dir/?api=1&destination=' + q;
@@ -2755,12 +2765,12 @@ window.SF_SEED_PRODUCTS = [
   function tbl(l) {
     if (!l.length) return '<p>Nenhum pedido.</p>';
     return '<div class="sf-t o"><table><tr><th>Pedido</th><th>Cliente</th><th>Itens</th><th>Valor</th><th>Tipo / previsão</th><th>Status</th><th></th></tr>' + l.map(function (o) {
-      return '<tr><td data-l="Pedido">' + o.id + '</td><td data-l="Cliente">' + pty(o) + '</td><td data-l="Itens">' + E(o.i) + '</td><td data-l="Valor">' + R(tot(o)) + '<br><small>' + E(o.p) + (fee(o) ? ' · com entrega ' + R(fee(o)) : '') + '</small></td><td data-l="Entrega">' + o.e + '<br><small>' + E(o.d ? o.d.replace('T', ' ') : '') + '</small>' + (o.a ? '<br><small>' + E(o.a) + '</small>' : '') + '</td><td data-l="Status">' + badge(o.s) + pgb(o) + '</td><td><div class="sf-row"><button class="sf-b s" data-a="det" data-id="' + o.id + '">Detalhes</button>' + (T === 'vendas' && !paid(o) ? '<button class="sf-b s y" data-a="pgok" data-id="' + o.id + '">Confirmar pagamento</button>' : '') + (T === 'vendas' ? '<button class="sf-b s r" data-a="del" data-id="' + o.id + '">Apagar</button>' : '') + '</div></td></tr>';
+      return '<tr><td data-l="Pedido">' + o.id + '</td><td data-l="Cliente">' + pty(o) + '</td><td data-l="Itens">' + E(o.i) + '</td><td data-l="Valor">' + R(tot(o)) + '<br><small>' + E(o.p) + (fee(o) ? ' · com entrega ' + R(fee(o)) : '') + '</small></td><td data-l="Entrega">' + o.e + '<br><small>' + (o.d ? E(o.d.replace('T', ' ')) : '<button class="sf-b s y" data-a="dtset" data-id="' + o.id + '">⏰ Definir data/hora</button>') + '</small>' + (o.a ? '<br><small>' + E(o.a) + '</small>' : '') + '</td><td data-l="Status">' + badge(o.s) + pgb(o) + '</td><td><div class="sf-row"><button class="sf-b s" data-a="det" data-id="' + o.id + '">Detalhes</button>' + (T === 'vendas' && !paid(o) ? '<button class="sf-b s y" data-a="pgok" data-id="' + o.id + '">Confirmar pagamento</button>' : '') + (T === 'vendas' ? '<button class="sf-b s r" data-a="del" data-id="' + o.id + '">Apagar</button>' : '') + '</div></td></tr>';
     }).join('') + '</table></div>';
   }
   function card(o, btn) {
     return '<div class="sf-card"><div class="sf-row"><b>' + o.id + '</b>' + badge(o.s) + pgb(o) + '</div>' + pic(o) + '<div>' + pty(o) + '</div><p>' + E(o.i) + '</p>' +
-      (o.m && !(ent() && o.an) ? '<p><small>Cartão: ' + E(o.m) + '</small></p>' : '') + (o.sp ? '<p><small>Exigência: ' + E(o.sp) + '</small></p>' : '') + '<p><small>' + o.e + (o.d ? ' · ' + E(o.d.replace('T', ' ')) : '') + '</small> ' + (o.s < 4 ? chip(o) : '') + '</p>' + (btn || '') +
+      (o.m && !(ent() && o.an) ? '<p><small>Cartão: ' + E(o.m) + '</small></p>' : '') + (o.sp ? '<p><small>Exigência: ' + E(o.sp) + '</small></p>' : '') + '<p><small>' + o.e + (o.d ? ' · ' + E(o.d.replace('T', ' ')) : '') + '</small> ' + (o.s < 4 ? chip(o) : '') + '</p>' + (!o.d && o.s < 4 && !ent() ? '<button class="sf-b s y" data-a="dtset" data-id="' + o.id + '">⏰ Definir data/hora</button>' : '') + (btn || '') +
       '<div class="sf-row"><button class="sf-b s y" data-a="det" data-id="' + o.id + '">Detalhes</button></div></div>';
   }
 
@@ -2801,7 +2811,7 @@ window.SF_SEED_PRODUCTS = [
       var l = D.o.filter(function (o) { return o.s < 2 && paid(o); }).sort(function (a, b) { return pl[a.id].start - pl[b.id].start; }), risk = l.filter(function (o) { return pl[o.id].risk; }).length;
       l.forEach(function (o) { sum[o.i] = (sum[o.i] || 0) + 1; });
       var rs = Object.keys(sum).map(function (k) { return '<div><small>' + E(k) + '</small><b>' + sum[k] + '×</b></div>'; }).join('');
-      var c = function (o) { var p = pl[o.id]; return card(o, (o.s === 1 ? '<p><small>▶ Iniciado por ' + who(o, 1) + '</small></p>' : '<p><b>' + (p.start <= Date.now() ? 'Iniciar agora' : 'Iniciar até ' + hm(p.start)) + '</b></p>') + (p.risk ? '<span class="sf-s s5">⚠ Risco de atraso</span>' : '') + '<button class="sf-b" data-a="adv" data-id="' + o.id + '">' + nextLabel(o) + '</button>'); };
+      var c = function (o) { var p = pl[o.id]; return card(o, (o.s === 1 ? '<p><small>▶ Iniciado por ' + who(o, 1) + '</small></p>' : '<p><b>' + (!o.d ? 'Data a combinar com o cliente' : p.start <= Date.now() ? 'Iniciar agora' : 'Iniciar até ' + hm(p.start)) + '</b></p>') + (p.risk ? '<span class="sf-s s5">⚠ Risco de atraso</span>' : '') + '<button class="sf-b" data-a="adv" data-id="' + o.id + '">' + nextLabel(o) + '</button>'); };
       return '<div class="sf-row"><button class="sf-b y" data-a="tv">📺 Transmitir tela (TV)</button></div>' +
         (risk ? '<div class="sf-alert bad">⚠ ' + risk + ' pedido(s) em risco de atraso com ' + n + ' pessoa(s) na produção. Coloque pelo menos <b>' + need + '</b> pessoas para ninguém atrasar' + (l.some(function (o) { return pl[o.id].late; }) ? ' e faça primeiro os que já passaram do horário' : '') + '.</div>' : '<div class="sf-alert ok">✅ Tudo no prazo com ' + n + ' pessoa(s) na produção.</div>') +
         '<div class="sf-row"><label>Pessoas na produção agora <input class="sf-s2" style="width:90px" type="number" min="1" max="30" value="' + n + '" data-a="cfg" data-k="staff"></label><label>Minutos por buquê <input class="sf-s2" style="width:90px" type="number" min="5" max="180" value="' + cfg('pm', 30) + '" data-a="cfg" data-k="pm"></label><label>Minutos até o cliente (entrega) <input class="sf-s2" style="width:90px" type="number" min="5" max="180" value="' + cfg('em', 30) + '" data-a="cfg" data-k="em"></label></div>' +
@@ -2913,7 +2923,7 @@ window.SF_SEED_PRODUCTS = [
   }
   function det(id) {
     var o = O(id); if (!o) return;
-    $('#sf-m').innerHTML = '<div class="sf-mo" data-a="mx"><div class="sf-md"><button class="sf-mx" data-a="mc" aria-label="Fechar">✕</button><div class="sf-row"><b>' + o.id + '</b>' + badge(o.s) + '</div><div>' + pty(o) + '</div><p>' + E(o.i) + '</p><p>' + R(o.v) + ' · ' + E(o.p) + '</p><p>' + o.e + (o.a ? ': ' + E(o.a) : '') + '</p>' + (o.d ? '<p>Previsão: ' + E(o.d.replace('T', ' ')) + '</p>' : '') + (o.m && !(ent() && o.an) ? '<p>Cartão: ' + E(o.m) + '</p>' : '') + (o.sp ? '<p>Exigência: ' + E(o.sp) + '</p>' : '') + (o.en ? '<p>Entregador: ' + E(o.en) + '</p>' : '') + tl(o) +
+    $('#sf-m').innerHTML = '<div class="sf-mo" data-a="mx"><div class="sf-md"><button class="sf-mx" data-a="mc" aria-label="Fechar">✕</button><div class="sf-row"><b>' + o.id + '</b>' + badge(o.s) + '</div><div>' + pty(o) + '</div><p>' + E(o.i) + '</p><p>' + R(o.v) + ' · ' + E(o.p) + '</p><p>' + o.e + (o.a ? ': ' + E(o.a) : '') + '</p>' + (o.d ? '<p>Previsão: ' + E(o.d.replace('T', ' ')) + '</p>' : o.s < 4 && !ent() ? '<button class="sf-b y" data-a="dtset" data-id="' + o.id + '">⏰ Definir data e hora</button>' : '') + (o.m && !(ent() && o.an) ? '<p>Cartão: ' + E(o.m) + '</p>' : '') + (o.sp ? '<p>Exigência: ' + E(o.sp) + '</p>' : '') + (o.en ? '<p>Entregador: ' + E(o.en) + '</p>' : '') + tl(o) +
       '<div class="sf-row">' + (o.s < 4 ? '<button class="sf-b" data-a="adv" data-id="' + o.id + '">' + nextLabel(o) + '</button><button class="sf-b r" data-a="can" data-id="' + o.id + '">Cancelar pedido</button>' : '') +
       (ent() ? '' : '<a class="sf-b y" target="_blank" rel="noopener" href="' + wa(o) + '">Status por WhatsApp</a>') + '' + (o.e === 'Entrega' ? '<button class="sf-b y" data-a="rota" data-id="' + o.id + '">🧭 Abrir no mapa</button>' : '') + (!ent() && !paid(o) ? '<button class="sf-b y" data-a="pgok" data-id="' + o.id + '">Confirmar pagamento</button>' : '') + '<button class="sf-b" data-a="img" data-id="' + o.id + '">🖼 Imagem do pedido</button>' + (ent() ? '' : '<button class="sf-b r" data-a="del" data-id="' + o.id + '">Apagar pedido</button>') + '<button class="sf-l" data-a="mc">Fechar</button></div></div></div>';
   }
@@ -2966,15 +2976,15 @@ window.SF_SEED_PRODUCTS = [
   }
   var tvT = 0, tvC = 0;
   function tvNome(o) { if (o.an) return 'Anônimo'; var p = String(o.c || '').trim().split(/\s+/); return p.length > 1 ? p[0] + ' ' + p[p.length - 1][0] + '.' : p[0] || '-'; }
-  function tvChip(o) { var ms = dueOf(o) - Date.now(); return ms < 0 ? ['late', 'Atrasado'] : ms < 7200000 ? ['soon', 'Urgente'] : ['ok', 'Normal']; }
+  function tvChip(o) { if (!o.d) return ['ok', 'A combinar']; var ms = dueOf(o) - Date.now(); return ms < 0 ? ['late', 'Atrasado'] : ms < 7200000 ? ['soon', 'Urgente'] : ['ok', 'Normal']; }
   function tvR() {
     var d = $('#sf-tv'); if (!d) return; var n = cfg('staff', 3), pl = plan(n), now = Date.now(), pm = cfg('pm', 30);
     var ds = new Date(now).toLocaleDateString('pt-BR', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }); ds = ds.charAt(0).toUpperCase() + ds.slice(1);
     var lst = function (s) { return D.o.filter(function (o) { return o.s === s && (s > 1 || paid(o)); }).sort(function (a, b) { return s === 0 && pl[a.id] && pl[b.id] ? pl[a.id].start - pl[b.id].start : dueOf(a) - dueOf(b); }); };
     var card = function (o, s) {
-      var p = pl[o.id], c = tvChip(o), st = o.h.filter(function (x) { return x[0] === 1; })[0], pct = st ? Math.min(100, Math.max(3, Math.round((now - st[1]) / (pm * 60000) * 100))) : 0, hh = (o.d || '').slice(11, 16);
+      var p = pl[o.id], c = tvChip(o), st = o.h.filter(function (x) { return x[0] === 1; })[0], pct = st ? Math.min(100, Math.max(3, Math.round((now - st[1]) / (pm * 60000) * 100))) : 0, hh = (o.d || '').slice(11, 16) || 'A definir';
       return '<div class="tv2c"><div class="tv2p">' + pic(o) + '</div><div class="tv2m"><div class="tv2h"><b>' + o.id + '</b><i class="tag t' + s + '">' + ['A iniciar', 'Em produção', 'Pronto'][s] + '</i></div><div class="tv2n">' + E(o.i) + '</div><div class="tv2l">👤 Cliente: ' + E(tvNome(o)) + '</div><div class="tv2l">📅 Entrega às ' + E(hh) + '</div>' +
-        (s === 0 && p ? '<div class="tv2l">🕒 ' + (p.start <= now ? 'Iniciar agora' : 'Iniciar até ' + hm(p.start)) + '</div>' : s === 2 ? '<div class="tv2l">✔ Pronto por ' + who(o, 2) + '</div>' : '') + '</div>' +
+        (s === 0 && p ? '<div class="tv2l">🕒 ' + (!o.d ? 'Data a combinar' : p.start <= now ? 'Iniciar agora' : 'Iniciar até ' + hm(p.start)) + '</div>' : s === 2 ? '<div class="tv2l">✔ Pronto por ' + who(o, 2) + '</div>' : '') + '</div>' +
         (s === 1 ? '<div class="tv2t"><small>Tempo de produção:</small><b>' + pm + ' min</b><div class="tv2bar"><i style="width:' + pct + '%"></i></div><span>' + pct + '%</span><small>' + (st ? 'Iniciado por ' + who(o, 1) : '') + '</small></div>' : '') +
         '<div class="tv2r ' + c[0] + '"><small>Entrega em</small><b>' + E(hh) + '</b><em>' + c[1] + '</em></div></div>';
     };
@@ -3003,6 +3013,7 @@ window.SF_SEED_PRODUCTS = [
     if (a === 'recx') { var pr = ((window.SF && SF.listProducts && SF.listProducts()) || [])[+el.dataset.pi]; await tk('sf_receita_salvar', { p_prod: SF.plainName(pr.name), p_ins: +el.dataset.ins, p_q: 0 }); await pull(); return render(); }
     if (a === 'tab') { T = el.dataset.v; SBO = false; return render(); }
     if (a === 'pgok' && o) { var mm = prompt('Forma de pagamento recebida (Pix, Dinheiro ou Cartão):', 'Pix'); if (!mm) return; await tk('sf_pg_equipe', { p_id: id, p_meio: mm }); await pull(); $('#sf-m').innerHTML = ''; return render(); }
+    if (a === 'dtset' && o) return modal('<h3 style="margin:0">⏰ Data e hora · ' + o.id + '</h3><p class="sf-note">Combinado com o cliente pelo WhatsApp.</p><form class="sf-f" data-f="dtset" style="grid-template-columns:1fr"><input type="hidden" name="id" value="' + o.id + '"><input name="d" type="datetime-local" min="' + minDT().slice(0, 11) + '00:00" required class="sf-red"><button class="sf-b">Salvar data e hora</button></form>');
     if (a === 'dark') { DK = !DK; localStorage.setItem('sf_dark', DK ? '1' : '0'); root.classList.toggle('sf-dark', DK); return render(); }
     var fid = +el.dataset.fid, fx = FN.f.filter(function (z) { return z.id === fid; })[0], fi = FN.f[+i];
     if (a === 'nf') return modal(ffm()); if (a === 'ef' && fi) return modal(ffm(fi));
@@ -3061,6 +3072,7 @@ window.SF_SEED_PRODUCTS = [
     if (k === 'login') return enter(await rpc('sf_login', { p_e: x.e, p_s: x.p }));
     if (k === 'rast') { var r = await rpc('sf_rastrear', { p_id: f.dataset.id, p_tel: x.q }); err(''); $('#sf-r').innerHTML = '<p>Olá, ' + E(r.c) + '! ' + badge(r.s) + '</p>' + tl(r) + '<small>Previsão: ' + E((r.d || '').replace('T', ' ')) + '</small>'; return; }
     var done = async function () { $('#sf-m').innerHTML = ''; await pull(); render(); };
+    if (k === 'dtset') { await tk('sf_pedido_data', { p_id: x.id, p_d: x.d }); return done(); }
     if (k === 'func') { x.ativo = x.ativo !== 'false'; await tk('sf_func_salvar', { p: x }); return done(); }
     if (k === 'folha') { x.pago = !!x.pago; await tk('sf_folha_salvar', { p: x }); return done(); }
     if (k === 'desp') { await tk('sf_desp_salvar', { p: x }); return done(); }
