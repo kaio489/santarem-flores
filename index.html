@@ -1041,17 +1041,39 @@ html:has(#order[open]) { overflow: hidden; }
 #buques .all__head { padding-top: 6px; margin-top: 0; }
 #buques .sec-head { display: none; }
 
+/* 36 · "Seus dados" compacto: mais informação na tela, sem rolar tanto */
+.oc__h { padding: calc(10px + env(safe-area-inset-top)) 16px 2px; }
+.oc__t { font-size: 1.3rem; }
+.oc__x { width: 34px; height: 34px; }
+.oc__b { gap: 9px; padding: 6px 16px 10px; }
+.oc__fl { gap: 4px; }
+.oc__fl > span, .oc__tp legend { font-size: .8rem; font-weight: 500; }
+.oc__fl input:not([type=checkbox]), .oc__fl textarea { padding: 10px 12px; border-radius: 12px; min-height: 44px; }
+.oc__fl textarea { min-height: 0; }
+.oc__2 { gap: 8px; }
+#oc-del { gap: 9px; }
+.oc__tp { gap: 8px; }.oc__tp legend { margin-bottom: 4px; }
+.oc__tp span { padding: 10px; font-size: .78rem; }
+.oc__ck { font-size: .85rem; margin: 0; }.oc__ck[hidden] { display: none; }
+.oc__f { padding: 8px 16px calc(10px + env(safe-area-inset-bottom)); gap: 6px; }
+.oc__fr { display: grid; grid-template-columns: auto 1fr; gap: 10px; align-items: center; }
+.oc__go--sm { padding: 11px 14px; font-size: .78rem; letter-spacing: .08em; }
+.oc__fr .oc__back { padding: 8px 4px; font-size: .88rem; white-space: nowrap; }
+.oc__err { font-size: .82rem; }
+@media (max-width: 380px) { .oc__2 { gap: 6px; } .oc__fl input:not([type=checkbox]), .oc__fl textarea { padding: 10px; } }
+.oc__fl textarea { height: 46px; min-height: 46px; resize: none; }
+
 </style>
 </head>
 <body>
 <style>
 html.sp-lock, html.sp-lock body { overflow: hidden !important; }
-#splash { position: fixed; inset: 0; z-index: 2147483600; overflow: hidden; display: grid; place-items: center; background: radial-gradient(120% 90% at 50% 45%, #fffdf3 0%, #fbf3d4 55%, #f6e7ae 100%); transition: opacity .9s ease .15s, visibility 0s linear 1.05s; font-family: 'Jost', system-ui, sans-serif; color: #351e16; }
+#splash { position: fixed; inset: 0; z-index: 2147483600; overflow: hidden; display: grid; place-items: center; background: radial-gradient(120% 90% at 50% 45%, #fffdf3 0%, #fbf3d4 55%, #f6e7ae 100%); transition: opacity .5s ease, visibility 0s linear .55s; font-family: 'Jost', system-ui, sans-serif; color: #351e16; }
 #splash.out { opacity: 0; visibility: hidden; pointer-events: none; }
 #splash .sp-fl { position: absolute; left: 0; top: 0; width: 0; height: 0; }
-#splash .fl { position: absolute; width: var(--s); height: var(--s); margin: calc(var(--s) / -2) 0 0 calc(var(--s) / -2); opacity: 0; transform: scale(0) rotate(-70deg); animation: sp-bloom 1.1s cubic-bezier(.2, 1.35, .4, 1) var(--d) forwards; transition: transform .9s cubic-bezier(.5, 0, .9, .4), opacity .7s ease; }
-#splash .fl svg { width: 100%; height: 100%; display: block; overflow: visible; filter: drop-shadow(0 6px 8px rgba(80, 45, 10, .22)); animation: sp-sway var(--sw) ease-in-out calc(var(--d) + 1.1s) infinite alternate; transform-origin: 50% 50%; }
-#splash .fl.spin svg { animation: sp-spin var(--sp) linear calc(var(--d) + 1s) infinite; }
+#splash .fl { position: absolute; width: var(--s); height: var(--s); margin: calc(var(--s) / -2) 0 0 calc(var(--s) / -2); opacity: 0; transform: scale(0) rotate(-70deg); animation: sp-bloom .7s cubic-bezier(.2, 1.35, .4, 1) var(--d) forwards; transition: transform .5s cubic-bezier(.5, 0, .9, .4), opacity .4s ease; }
+#splash .fl svg { width: 100%; height: 100%; display: block; overflow: visible; filter: drop-shadow(0 6px 8px rgba(80, 45, 10, .22)); animation: sp-sway var(--sw) ease-in-out calc(var(--d) + .7s) infinite alternate; transform-origin: 50% 50%; }
+#splash .fl.spin svg { animation: sp-spin var(--sp) linear calc(var(--d) + .6s) infinite; }
 #splash.out .fl { opacity: 0; transform: translate(var(--ox), var(--oy)) scale(1.5) rotate(40deg); animation: none; }
 @keyframes sp-bloom { 0% { opacity: 0; transform: scale(0) rotate(-70deg); } 60% { opacity: 1; } 100% { opacity: 1; transform: scale(1) rotate(0); } }
 @keyframes sp-sway { from { transform: rotate(-6deg) scale(.98); } to { transform: rotate(6deg) scale(1.04); } }
@@ -1059,20 +1081,20 @@ html.sp-lock, html.sp-lock body { overflow: hidden !important; }
 #splash .pt { position: absolute; top: -6vmin; left: var(--x); width: var(--w); height: calc(var(--w) * 2.3); border-radius: 50% 50% 50% 50% / 88% 88% 14% 14%; background: linear-gradient(95deg, #e89b00, #ffd23c 45%, #f4b400); opacity: .9; animation: sp-fall var(--t) linear var(--dl) infinite; box-shadow: 0 3px 5px -3px rgba(53, 30, 22, .5); }
 #splash .pt.pk { background: linear-gradient(95deg, #e8708f, #f8b5c8 50%, #ec7f9b); }
 @keyframes sp-fall { 0% { transform: translate3d(0, 0, 0) rotate(0); } 50% { transform: translate3d(var(--dx), 55vh, 0) rotate(200deg) scaleX(.5); } 100% { transform: translate3d(calc(var(--dx) * -.6), 112vh, 0) rotate(420deg); } }
-#splash .sp-c { position: relative; z-index: 3; display: grid; justify-items: center; gap: 2.4vmin; text-align: center; transition: transform .9s cubic-bezier(.4, 0, .2, 1), opacity .7s ease; }
+#splash .sp-c { position: relative; z-index: 3; display: grid; justify-items: center; gap: 2.4vmin; text-align: center; transition: transform .5s cubic-bezier(.4, 0, .2, 1), opacity .4s ease; }
 #splash.out .sp-c { transform: scale(1.35); opacity: 0; }
-#splash .sp-ring { position: relative; width: min(38vmin, 230px); aspect-ratio: 1; display: grid; place-items: center; animation: sp-logo 1.2s cubic-bezier(.2, 1.3, .35, 1) .15s both; }
-#splash .sp-ring::before { content: ""; position: absolute; inset: -22%; border-radius: 50%; background: radial-gradient(circle, rgba(255, 224, 80, .75), rgba(255, 224, 80, 0) 68%); animation: sp-glow 2.4s ease-in-out infinite; }
-#splash .sp-ring img { position: relative; width: 78%; height: 78%; border-radius: 50%; box-shadow: 0 14px 34px -12px rgba(53, 30, 22, .65); animation: sp-float 3s ease-in-out 1.4s infinite; }
+#splash .sp-ring { position: relative; width: min(38vmin, 230px); aspect-ratio: 1; display: grid; place-items: center; animation: sp-logo .7s cubic-bezier(.2, 1.3, .35, 1) .05s both; }
+#splash .sp-ring::before { content: ""; position: absolute; inset: -22%; border-radius: 50%; background: radial-gradient(circle, rgba(255, 224, 80, .75), rgba(255, 224, 80, 0) 68%); animation: sp-glow 1.8s ease-in-out infinite; }
+#splash .sp-ring img { position: relative; width: 78%; height: 78%; border-radius: 50%; box-shadow: 0 14px 34px -12px rgba(53, 30, 22, .65); animation: sp-float 2s ease-in-out .8s infinite; }
 #splash .sp-ring svg { position: absolute; inset: 0; width: 100%; height: 100%; transform: rotate(-90deg); }
 #splash .sp-trk { fill: none; stroke: rgba(53, 30, 22, .12); stroke-width: 2.4; }
 #splash .sp-prg { fill: none; stroke: #351e16; stroke-width: 2.4; stroke-linecap: round; stroke-dasharray: 327; stroke-dashoffset: 327; }
 @keyframes sp-logo { 0% { opacity: 0; transform: scale(.35) rotate(-25deg); } 100% { opacity: 1; transform: none; } }
 @keyframes sp-glow { 0%, 100% { opacity: .55; transform: scale(.94); } 50% { opacity: 1; transform: scale(1.08); } }
 @keyframes sp-float { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.045); } }
-#splash .sp-n { margin: 0; font-size: clamp(1.5rem, 6.4vmin, 2.6rem); letter-spacing: .06em; font-weight: 400; animation: sp-up .9s ease 1s both; }
-#splash .sp-t { margin: 0; font-size: clamp(.8rem, 2.6vmin, 1.05rem); letter-spacing: .12em; text-transform: uppercase; opacity: .7; animation: sp-up .9s ease 1.25s both; }
-#splash .sp-b { width: min(46vmin, 260px); height: 3px; border-radius: 3px; background: rgba(53, 30, 22, .12); overflow: hidden; animation: sp-up .9s ease 1.4s both; }
+#splash .sp-n { margin: 0; font-size: clamp(1.5rem, 6.4vmin, 2.6rem); letter-spacing: .06em; font-weight: 400; animation: sp-up .5s ease .45s both; }
+#splash .sp-t { margin: 0; font-size: clamp(.8rem, 2.6vmin, 1.05rem); letter-spacing: .12em; text-transform: uppercase; opacity: .7; animation: sp-up .5s ease .6s both; }
+#splash .sp-b { width: min(46vmin, 260px); height: 3px; border-radius: 3px; background: rgba(53, 30, 22, .12); overflow: hidden; animation: sp-up .5s ease .7s both; }
 #splash .sp-b i { display: block; height: 100%; width: 0; background: linear-gradient(90deg, #f5b400, #351e16); border-radius: 3px; }
 @keyframes sp-up { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: none; } }
 @media (prefers-reduced-motion: reduce) { #splash .fl, #splash .fl svg, #splash .sp-ring, #splash .sp-ring img, #splash .sp-ring::before, #splash .pt { animation: none !important; } #splash .fl { opacity: 1; transform: none; } #splash .pt { display: none; } }
@@ -1105,34 +1127,34 @@ html.sp-lock, html.sp-lock body { overflow: hidden !important; }
   var SIZE = { sun: 52, dai: 46, ros: 46, blo: 38, leaf: 36 };
   function add(type, x, y, size, delay, rot, spin) {
     var d = document.createElement('div'), a = Math.atan2(y - cy, x - cx), vb = type === 'leaf' ? '-40 -80 80 90' : '-50 -50 100 100';
-    d.className = 'fl' + (spin ? ' spin' : ''); d.style.cssText = 'left:' + x.toFixed(0) + 'px;top:' + y.toFixed(0) + 'px;--s:' + size.toFixed(0) + 'px;--d:' + delay.toFixed(2) + 's;--sw:' + (2.2 + R() * 2).toFixed(1) + 's;--sp:' + (30 + R() * 30).toFixed(0) + 's;--ox:' + (Math.cos(a) * U * .9).toFixed(0) + 'px;--oy:' + (Math.sin(a) * U * .9).toFixed(0) + 'px;';
+    d.className = 'fl' + (spin ? ' spin' : ''); d.style.cssText = 'left:' + x.toFixed(0) + 'px;top:' + y.toFixed(0) + 'px;--s:' + size.toFixed(0) + 'px;--d:' + delay.toFixed(2) + 's;--sw:' + (1.6 + R() * 1.6).toFixed(1) + 's;--sp:' + (20 + R() * 20).toFixed(0) + 's;--ox:' + (Math.cos(a) * U * .9).toFixed(0) + 'px;--oy:' + (Math.sin(a) * U * .9).toFixed(0) + 'px;';
     d.innerHTML = '<svg viewBox="' + vb + '" style="transform:rotate(' + rot + 'deg)">' + F[type]() + '</svg>'; box.appendChild(d);
   }
   var RX = Math.min(W * .37, U * .56), RY = Math.min(H * .33, U * .52), types = ['sun', 'ros', 'dai', 'blo', 'sun', 'ros', 'blo', 'dai'], i, k, a;
   function onRing(a, m) { return [cx + Math.cos(a) * RX * m, cy + Math.sin(a) * RY * m]; }
-  /* folhas atrás, flores na coroa em volta da logo, flores maiores nos cantos */
-  for (i = 0; i < 14; i++) { a = i / 14 * Math.PI * 2 + .2; k = onRing(a, 1.08); add('leaf', k[0], k[1], U * .15, .15 + i * .05, a * 180 / Math.PI + 90, false); }
-  for (i = 0; i < 16; i++) { a = i / 16 * Math.PI * 2 - Math.PI / 2; k = types[i % types.length]; var p = onRing(a, i % 2 ? .92 : 1.06); add(k, p[0], p[1], U * (SIZE[k] / 100) * (.34 + R() * .12), .5 + i * .09, R() * 360, k === 'sun' || k === 'dai'); }
+  /* folhas atrás, flores na coroa em volta da logo, flores maiores nos cantos (uma entre as outras) */
+  for (i = 0; i < 14; i++) { a = i / 14 * Math.PI * 2 + .2; k = onRing(a, 1.08); add('leaf', k[0], k[1], U * .15, .05 + i * .025, a * 180 / Math.PI + 90, false); }
+  for (i = 0; i < 16; i++) { a = i / 16 * Math.PI * 2 - Math.PI / 2; k = types[i % types.length]; var p = onRing(a, i % 2 ? .92 : 1.06); add(k, p[0], p[1], U * (SIZE[k] / 100) * (.34 + R() * .12), .2 + i * .045, R() * 360, k === 'sun' || k === 'dai'); }
   var corners = [[.03, .05], [.97, .06], [.04, .95], [.96, .94], [.5, .01], [.5, .99], [.01, .5], [.99, .5], [.16, .17], [.84, .18], [.15, .84], [.85, .83]];
-  for (i = 0; i < corners.length; i++) { k = types[(i * 3) % types.length]; add(k, W * corners[i][0], H * corners[i][1], U * (SIZE[k] / 100) * (.5 + R() * .3), 1 + i * .1, R() * 360, k === 'sun' || k === 'dai'); }
-  if (!reduce) for (i = 0; i < 18; i++) { k = document.createElement('i'); k.className = 'pt' + (i % 3 === 0 ? ' pk' : ''); k.style.cssText = '--x:' + (R() * 100).toFixed(0) + '%;--w:' + (5 + R() * 6).toFixed(0) + 'px;--t:' + (6 + R() * 5).toFixed(1) + 's;--dl:' + (-R() * 8).toFixed(1) + 's;--dx:' + ((R() - .5) * 140).toFixed(0) + 'px'; sp.appendChild(k); }
-  /* abre quando o catálogo (dados + fotos) estiver pronto */
-  var t0 = Date.now(), MIN = reduce ? 900 : 2900, MAX = 9500, finished = false, prog = 0, prg = document.getElementById('sp-prg'), bar = document.getElementById('sp-bar');
-  function catalogReady() {
+  for (i = 0; i < corners.length; i++) { k = types[(i * 3) % types.length]; add(k, W * corners[i][0], H * corners[i][1], U * (SIZE[k] / 100) * (.5 + R() * .3), .4 + i * .05, R() * 360, k === 'sun' || k === 'dai'); }
+  if (!reduce) for (i = 0; i < 16; i++) { k = document.createElement('i'); k.className = 'pt' + (i % 3 === 0 ? ' pk' : ''); k.style.cssText = '--x:' + (R() * 100).toFixed(0) + '%;--w:' + (5 + R() * 6).toFixed(0) + 'px;--t:' + (3.5 + R() * 3).toFixed(1) + 's;--dl:' + (-R() * 5).toFixed(1) + 's;--dx:' + ((R() - .5) * 140).toFixed(0) + 'px'; sp.appendChild(k); }
+  /* dura no máximo ~2 s: abre assim que o catálogo estiver pronto (mínimo 1,1 s) e, no limite, em 1,35 s + 0,5 s de fade */
+  var t0 = Date.now(), MIN = reduce ? 400 : 1100, MAX = 1350, finished = false, prg = document.getElementById('sp-prg'), bar = document.getElementById('sp-bar');
+  function ready() {
     try {
       var S = window.SF; if (!S || !S.getProducts || !S.getProducts().length) return false;
-      var im = [].slice.call(document.querySelectorAll('#grid img')).filter(function (x) { var r = x.getBoundingClientRect(); return r.top < H + 40; }).slice(0, 8);
+      var im = [].slice.call(document.querySelectorAll('#grid img')).filter(function (x) { return x.getBoundingClientRect().top < H + 40; }).slice(0, 6);
       return im.length > 0 && im.every(function (x) { return x.complete; });
     } catch (e) { return false; }
   }
   function draw(p) { prg.style.strokeDashoffset = (327 * (1 - p)).toFixed(1); bar.style.width = (p * 100).toFixed(0) + '%'; }
   function finish() {
-    if (finished) return; finished = true; draw(1);
-    setTimeout(function () { sp.classList.add('out'); de.classList.remove('sp-lock'); window.scrollTo(0, 0); setTimeout(function () { if (sp.parentNode) sp.parentNode.removeChild(sp); }, 1300); }, 350);
+    if (finished) return; finished = true; draw(1); window.__spMs = Date.now() - t0;
+    setTimeout(function () { sp.classList.add('out'); de.classList.remove('sp-lock'); window.scrollTo(0, 0); setTimeout(function () { if (sp.parentNode) sp.parentNode.removeChild(sp); }, 800); }, 120);
   }
   (function tick() {
-    if (finished) return; var el = Date.now() - t0, ok = catalogReady();
-    prog = Math.min(ok ? 1 : .9, Math.max(prog, 1 - Math.exp(-el / 2600))); draw(prog);
+    if (finished) return; var el = Date.now() - t0, ok = ready();
+    draw(Math.min(.95, 1 - Math.exp(-el / 500)));
     if ((ok && el >= MIN) || el >= MAX) return finish();
     requestAnimationFrame(tick);
   })();
@@ -2105,21 +2127,19 @@ window.SF_SEED_PRODUCTS = [
 
   function rData() {
     const f = S.f, v = (k) => esc(f[k] || '');
-    shell('Seus dados', 'Preencha para finalizar o pedido.', `
+    shell('Seus dados', '', `
       <fieldset class="oc__tp"><legend>Tipo de pedido *</legend><label><input type="radio" name="mode" value="delivery" ${f.mode === 'delivery' ? 'checked' : ''}><span>Entrega</span></label><label><input type="radio" name="mode" value="pickup" ${f.mode === 'pickup' ? 'checked' : ''}><span>Retirada</span></label></fieldset>
-      <label class="oc__fl"><span>Nome *</span><input name="name" type="text" autocomplete="name" maxlength="80" placeholder="Seu nome" value="${v('name')}"></label>
-      <label class="oc__fl"><span>Telefone (WhatsApp) *</span><input name="phone" type="tel" autocomplete="tel" maxlength="20" placeholder="(93) 9 0000-0000" value="${v('phone')}"></label>
+      <div class="oc__2"><label class="oc__fl"><span>Nome *</span><input name="name" type="text" autocomplete="name" maxlength="80" placeholder="Seu nome" value="${v('name')}"></label><label class="oc__fl"><span>Telefone *</span><input name="phone" type="tel" autocomplete="tel" maxlength="20" placeholder="(93) 9…" value="${v('phone')}"></label></div>
       <div id="oc-del" ${f.mode === 'delivery' ? '' : 'hidden'}>
-        <label class="oc__fl"><span>Nome de quem vai receber *</span><input name="rn" type="text" maxlength="80" placeholder="Nome do destinatário" value="${v('rn')}"></label>
-        <label class="oc__fl"><span>Telefone de quem vai receber *</span><input name="rt" type="tel" maxlength="20" placeholder="(93) 9 0000-0000" value="${v('rt')}"></label>
+        <div class="oc__2"><label class="oc__fl"><span>Quem recebe *</span><input name="rn" type="text" maxlength="80" placeholder="Nome" value="${v('rn')}"></label><label class="oc__fl"><span>Tel. de quem recebe *</span><input name="rt" type="tel" maxlength="20" placeholder="(93) 9…" value="${v('rt')}"></label></div>
         <label class="oc__fl"><span>Rua/Avenida *</span><input name="ru" type="text" maxlength="80" placeholder="Nome da rua ou avenida" value="${v('ru')}"></label>
-        <div class="oc__2"><label class="oc__fl"><span>Número da casa *</span><input name="nu" type="text" maxlength="12" placeholder="Ex.: 123" value="${v('nu')}"></label><label class="oc__fl"><span>Complemento (opcional)</span><input name="comp" type="text" maxlength="40" placeholder="Apto, bloco..." value="${v('comp')}"></label></div>
+        <div class="oc__2"><label class="oc__fl"><span>Número *</span><input name="nu" type="text" maxlength="12" placeholder="Ex.: 123" value="${v('nu')}"></label><label class="oc__fl"><span>Complemento</span><input name="comp" type="text" maxlength="40" placeholder="Apto, bloco…" value="${v('comp')}"></label></div>
         <div class="oc__2"><label class="oc__fl"><span>Bairro *</span><input name="ba" type="text" maxlength="60" placeholder="Seu bairro" value="${v('ba')}"></label><label class="oc__fl"><span>Cidade *</span><input name="ci" type="text" maxlength="40" value="${esc(f.ci || 'Santarém')}"></label></div>
-        <label class="oc__fl"><span>Referência (opcional)</span><input name="ref" type="text" maxlength="80" placeholder="Ponto de referência" value="${v('ref')}"></label>
-        <label class="oc__ck"><input type="checkbox" name="anon" ${f.anon ? 'checked' : ''}> Enviar de forma anônima</label>
+        <label class="oc__fl"><span>Referência</span><input name="ref" type="text" maxlength="80" placeholder="Ponto de referência" value="${v('ref')}"></label>
       </div>
-      <label class="oc__fl"><span>Mensagem para o presente (opcional)</span><textarea name="note" rows="3" maxlength="180" placeholder="Ex.: Feliz aniversário, mãe! ❤️">${v('note')}</textarea></label>`,
-      '<button class="oc__go" type="button" data-act="tpay">Ver resumo do pedido</button><button class="oc__back" type="button" data-act="tcart">← Voltar ao carrinho</button>');
+      <label class="oc__fl"><span>Mensagem para o presente (opcional)</span><textarea name="note" rows="1" maxlength="180" placeholder="Ex.: Feliz aniversário, mãe! ❤️">${v('note')}</textarea></label>
+      <label class="oc__ck" id="oc-an" ${f.mode === 'delivery' ? '' : 'hidden'}><input type="checkbox" name="anon" ${f.anon ? 'checked' : ''}> Enviar de forma anônima</label>`,
+      '<div class="oc__fr"><button class="oc__back" type="button" data-act="tcart">← Voltar</button><button class="oc__go oc__go--sm" type="button" data-act="tpay">Ver resumo do pedido</button></div>');
   }
 
   function rPay() {
@@ -2179,7 +2199,7 @@ window.SF_SEED_PRODUCTS = [
     }
   }
 
-  inner.addEventListener('change', (e) => { if (e.target.name === 'mode') { S.f.mode = e.target.value; const d = $('#oc-del'); if (d) d.hidden = e.target.value !== 'delivery'; } });
+  inner.addEventListener('change', (e) => { if (e.target.name === 'mode') { S.f.mode = e.target.value; const d = $('#oc-del'), an = $('#oc-an'); if (d) d.hidden = e.target.value !== 'delivery'; if (an) an.hidden = e.target.value !== 'delivery'; } });
   inner.addEventListener('click', (e) => {
     const a = e.target.closest('[data-act]'); if (!a) return; const act = a.dataset.act, i = +a.dataset.i;
     if (act === 'close') dlg.close();
