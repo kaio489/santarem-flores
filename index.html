@@ -1099,6 +1099,26 @@ html:has(#order[open]) { overflow: hidden; }
 
 </style>
 <style>.sf-lj{width:22px;height:22px;border-radius:50%;object-fit:cover;vertical-align:middle;margin:0 6px;box-shadow:0 0 0 1px rgba(0,0,0,.15)}</style>
+<style id="sf-ajustes">
+.chips-wrap { position: sticky; top: var(--header-h, 56px); z-index: 20; margin: 0 -14px 10px; background: linear-gradient(var(--bg, #fbf8f1) 80%, transparent); width: auto !important; max-width: 100% !important; min-width: 0 !important; justify-self: stretch !important; }
+.all__head { grid-template-columns: minmax(0, 1fr) !important; }
+html body #chips { position: static !important; margin: 0 !important; background: none !important; padding: 6px 44px 8px 12px !important; gap: 5px !important; max-width: 100% !important; min-width: 0 !important; overflow-x: auto !important; -webkit-overflow-scrolling: touch; touch-action: pan-x pan-y; justify-content: flex-start !important; }
+html body #chips .chip { display: inline-flex !important; align-items: center; gap: 5px !important; min-height: 34px !important; padding: 3px 10px 3px 3px !important; font-size: .78rem !important; font-weight: 500; text-transform: none !important; letter-spacing: 0 !important; background: #f6f0e2 !important; color: var(--ink, #351e16) !important; border: 1.5px solid rgba(53, 30, 22, .08) !important; box-shadow: 0 8px 18px -12px rgba(53, 30, 22, .5) !important; }
+html body #chips .chip::after { display: none; }
+html body #chips .chip__ic { width: 28px !important; height: 28px !important; border-radius: 50%; display: grid; place-items: center; font-size: 1rem !important; line-height: 1; background: #fff; box-shadow: inset 0 0 0 1px rgba(53, 30, 22, .08); }
+html body #chips .chip[aria-pressed="true"] { background: var(--brown, #351e16) !important; color: #fbf8f1 !important; border-color: var(--brown, #351e16) !important; }
+html body #chips .chip[aria-pressed="true"] .chip__ic { background: transparent; box-shadow: none; }
+html body .chips-next { position: absolute; right: 8px; top: 50%; transform: translateY(-50%); width: 34px !important; height: 34px !important; border-radius: 50%; border: 0; background: #f6f0e2; color: var(--ink, #351e16); font-size: 1.4rem !important; line-height: 1; display: grid; place-items: center; padding: 0 0 3px; box-shadow: 0 6px 16px -8px rgba(53, 30, 22, .6); }
+@media (min-width: 900px) { .chips-wrap { margin: 0 0 12px; } html body #chips { padding-right: 12px !important; } .chips-next { display: none !important; } }
+html body .site-header .header__inner { align-items: center !important; }
+html body .brand { align-self: center !important; margin: 0 !important; display: grid !important; place-items: center; }
+html body .brand img { display: block !important; margin: 0 !important; box-shadow: 0 0 0 1px rgba(53, 30, 22, .12), 0 3px 8px -4px rgba(53, 30, 22, .55) !important; }
+html body #buques, html body #buques .all { padding-top: 0 !important; }
+html body #buques .all__pad { padding-top: 10px !important; }
+html body #buques .all__head { padding-top: 0 !important; margin-top: 0 !important; gap: 2px !important; }
+html body #buques .all__title { margin-top: 0 !important; }
+.all__close { display: flex !important; justify-content: center; margin: 28px 0 10px; }
+</style>
 </head>
 <body>
 <style>
@@ -1245,10 +1265,11 @@ html.sp-lock, html.sp-lock body { overflow: hidden !important; }
         <div class="all__head">
           <h3 class="all__title">Todo o catálogo</h3>
           <p class="all__count" id="all-count"></p>
-          <div class="chips" id="chips" role="group" aria-label="Filtrar por categoria"></div>
+          <div class="chips-wrap"><div class="chips" id="chips" role="group" aria-label="Filtrar por categoria"></div><button class="chips-next" type="button" aria-label="Ver mais categorias">›</button></div>
         </div>
         <div class="grid" id="grid"></div>
         <div class="all__close">
+          <a class="btn btn--wa" data-wa href="#"><svg class="icon" aria-hidden="true"><use href="#i-whatsapp"/></svg><span>Falar no WhatsApp</span></a>
         </div>
       </div>
     </div>
@@ -1280,7 +1301,7 @@ html.sp-lock, html.sp-lock body { overflow: hidden !important; }
   <div class="container">
     <h2 class="band__title" id="band-title">Seu momento especial começa com um gesto.</h2>
     <p class="band__text">Escolha seu buquê e fale com a Santarém Flores.</p>
-    <a class="btn btn--wa" data-wa href="#"><svg class="icon" aria-hidden="true"><use href="#i-whatsapp"/></svg><span>Quero saber mais</span></a>
+    
   </div>
 </section>
 
@@ -1780,7 +1801,7 @@ window.SF_SEED_PRODUCTS = [];
     const cats = [...ord.filter((c) => have.has(c)), ...[...have].filter((c) => !ord.includes(c))].slice(0, 8);
     const wrap = $('#chips');
     wrap.hidden = false;
-    wrap.innerHTML = ['__top', ...cats].map((c) => `<button class="chip" type="button" data-cat="${esc(c)}" aria-pressed="${c === activeCategory}">${c === '__top' ? '⭐ Mais vendidos' : esc(c)}</button>`).join('');
+    wrap.innerHTML = ['__top', ...cats].map((c) => `<button class="chip" type="button" data-cat="${esc(c)}" aria-pressed="${c === activeCategory}"><span class="chip__ic" aria-hidden="true">${c === '__top' ? '⭐' : ({rosas:'🌹',girassois:'🌻',stitch:'🧸',presentes:'🎁',buques:'💐',box:'🎀',chocolates:'🍫',pelucia:'🧸'})[String(c).normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().trim()] || '🌸'}</span><span class="chip__tx">${c === '__top' ? 'Mais vendidos' : esc(c)}</span></button>`).join('');
   }
 
   function renderGrid() {
@@ -2881,8 +2902,8 @@ window.SF_SEED_PRODUCTS = [];
     var ago = function (t) { var m = Math.max(0, Math.round((Date.now() - t) / 60000)); return m < 60 ? m + ' min' : m < 1440 ? Math.floor(m / 60) + ' h' : Math.floor(m / 1440) + ' dia(s)'; };
     var wl = function (tel, txt) { var t = String(tel || '').replace(/\D/g, ''); if (t.length <= 11) t = '55' + t; return 'https://wa.me/' + t + '?text=' + encodeURIComponent(txt); };
     var card = function (tag, nome, tel, item, val, t, btns, link) { return '<div class="sf-card pend"><div class="sf-row"><b>' + tag + '</b><span class="sf-s s1">há ' + ago(t) + '</span></div><div><b>' + E(nome) + '</b> · ' + E(tel) + '</div><p>' + E(item) + ' · ' + R(val) + '</p><div class="sf-row"><a class="sf-b s y" target="_blank" rel="noopener" href="' + link + '">💬 Chamar no WhatsApp</a>' + btns + '</div></div>'; };
-    return '<div class="sf-alert bad">🔥 Faltou só o pagamento: ' + po.length + ' pedido(s) e ' + LD.length + ' cliente(s) que não finalizaram. Entre em contato para continuar a venda.</div><div class="sf-g">' +
-      po.map(function (o) { return card(lj(o) + 'Pedido ' + o.id, o.c, o.t, o.i, tot(o), o.t0, '<button class="sf-b s" data-a="pgok" data-id="' + o.id + '">Confirmar pagamento</button>', wl(o.t, 'Olá, ' + String(o.c).split(' ')[0] + '! 🌸 Aqui é da Santarém Flores.\nVimos o seu pedido ' + o.id + ' (' + o.i + ') e falta só o pagamento. 💳\nPosso te ajudar a finalizar? 😊')); }).join('') +
+    return '<div class="sf-alert bad">🔥 Faltou só o pagamento: ' + po.length + ' pedido(s) e ' + LD.length + ' cliente(s) que não finalizaram. Entre em contato para continuar a venda.</div><div class="sf-row" style="margin:8px 0"><button class="sf-b s r" data-a="vfc">🚫 Pedidos cancelados (' + D.o.filter(function (o) { return o.s === 5; }).length + ')</button></div><div class="sf-g">' +
+      po.map(function (o) { return card(lj(o) + 'Pedido ' + o.id, o.c, o.t, o.i, tot(o), o.t0, '<button class="sf-b s" data-a="pgok" data-id="' + o.id + '">Confirmar pagamento</button><button class="sf-b s y" data-a="det" data-id="' + o.id + '">Detalhes do pedido</button><button class="sf-b s r" data-a="can" data-id="' + o.id + '">Cancelar pedido</button>', wl(o.t, 'Olá, ' + String(o.c).split(' ')[0] + '! 🌸 Aqui é da Santarém Flores.\nVimos o seu pedido ' + o.id + ' (' + o.i + ') e falta só o pagamento. 💳\nPosso te ajudar a finalizar? 😊')); }).join('') +
       LD.map(function (l) { return card('🛒 Não finalizou', l.c, l.t, l.i, l.v, l.criado, '<button class="sf-b s" data-a="ldst" data-lid="' + l.id + '" data-st="atendido">Atendido</button><button class="sf-b s r" data-a="ldst" data-lid="' + l.id + '" data-st="descartado">Descartar</button>', wl(l.t, 'Olá, ' + String(l.c).split(' ')[0] + '! 🌸 Aqui é da Santarém Flores.\nVimos que você começou um pedido de ' + l.i + ' e ele não foi finalizado. 💐\nPosso te ajudar a concluir? 😊')); }).join('') + '</div>';
   }
   function mesel() { return '<label>Mês <input class="sf-s2" style="width:auto" type="month" value="' + MS + '" data-a="mes"></label>'; }
@@ -2955,7 +2976,7 @@ var LJ = { sf: ['Santarém Flores', 'UklGRoYPAABXRUJQVlA4WAoAAAAQAAAARwAARwAAQUx
       var q = VQ.toLowerCase(), l = D.o.slice().reverse().filter(function (o) { return (!VF || String(o.s) === VF) && (!q || (o.id + o.c + o.t + o.i + (o.rn || '')).toLowerCase().indexOf(q) > -1); });
       var pages = Math.max(1, Math.ceil(l.length / 10)); if (VP > pages) VP = pages;
       var pgh = '<div class="sf-pg"><small>' + l.length + ' pedido(s) · página ' + VP + ' de ' + pages + '</small><div class="sf-row"><button data-a="vp" data-p="' + Math.max(1, VP - 1) + '">Ant</button>' + Array.apply(null, Array(pages)).map(function (z, n) { return n + 1; }).filter(function (n) { return Math.abs(n - VP) < 3 || n === 1 || n === pages; }).map(function (n) { return '<button class="' + (n === VP ? 'on' : '') + '" data-a="vp" data-p="' + n + '">' + n + '</button>'; }).join('') + '<button data-a="vp" data-p="' + Math.min(pages, VP + 1) + '">Seg</button></div></div>';
-      return pendBox() + '<div class="sf-tb"><button class="sf-b" data-a="addp">' + (AO ? '✕ Fechar' : '＋ Adicionar pedido') + '</button><input type="search" data-a="vq" placeholder="Buscar por código, cliente, telefone ou item" value="' + E(VQ) + '"><select data-a="vf"><option value="">Todas as etapas</option>' + ST.map(function (x, n) { return '<option value="' + n + '" ' + (VF === String(n) ? 'selected' : '') + '>' + x + '</option>'; }).join('') + '</select></div>' + f +
+      return pendBox() + '<div class="sf-tb"><button class="sf-b" data-a="addp">' + (AO ? '✕ Fechar' : '＋ Adicionar pedido') + '</button><input type="search" data-a="vq" placeholder="Buscar por código, cliente, telefone ou item" value="' + E(VQ) + '"><select data-a="vf"><option value="">Todas as etapas</option>' + ST.map(function (x, n) { return '<option value="' + n + '" ' + (VF === String(n) ? 'selected' : '') + '>' + x + '</option>'; }).join('') + '</select><button class="sf-b s r" data-a="vfc">🚫 ' + (VF === '5' ? 'Ver todos' : 'Cancelados (' + D.o.filter(function (o) { return o.s === 5; }).length + ')') + '</button></div>' + f +
         '<h3>Controle de pedidos</h3>' + tbl(l.slice((VP - 1) * 10, VP * 10)) + pgh;
     },
     producao: function () {
@@ -3198,6 +3219,7 @@ var LJ = { sf: ['Santarém Flores', 'UklGRoYPAABXRUJQVlA4WAoAAAAQAAAARwAARwAAQUx
     if (a === 'img' && o) return pedImg(o);
     if (a === 'ir' && o) { await tk('sf_entregar', { p_id: id }); await pull(); render(); return (location.href = mapsUrl(o)); }
     if (a === 'del' && o) { var sn = prompt('Para apagar o pedido ' + id + ', digite a senha do administrador:'); if (!sn) return; await tk('sf_apagar', { p_id: id, p_senha: sn }); await pull(); $('#sf-m').innerHTML = ''; return render(); }
+    if (a === 'vfc') { VF = (T === 'vendas' && VF === '5') ? '' : '5'; T = 'vendas'; VP = 1; return render(); }
     if (a === 'det') return det(id);
     if (a === 'adv' && o) { var mo = $('#sf-m').innerHTML; await tk('sf_status', { p_id: id, p_s: o.s === 2 && o.e !== 'Entrega' ? 4 : o.s + 1 }); await pull(); render(); if (mo) det(id); return; }
     if (a === 'can' && o && confirm('Cancelar o pedido ' + id + '?')) { await tk('sf_status', { p_id: id, p_s: 5 }); await pull(); render(); return det(id); }
@@ -3258,5 +3280,6 @@ var LJ = { sf: ['Santarém Flores', 'UklGRoYPAABXRUJQVlA4WAoAAAAQAAAARwAARwAAQUx
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init); else init();
 })();
 </script>
+<script>document.addEventListener('click', function (ev) { var b = ev.target.closest && ev.target.closest('.chips-next'); if (b) { var ch = document.getElementById('chips'); ch.scrollBy({ left: ch.clientWidth * .6, behavior: 'smooth' }); } });</script>
 </body>
 </html>
