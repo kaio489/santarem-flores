@@ -1110,6 +1110,14 @@ html body #chips .chip[aria-pressed="true"] { background: var(--brown, #351e16) 
 html body #chips .chip[aria-pressed="true"] .chip__ic { background: transparent; box-shadow: none; }
 html body .chips-next { position: absolute; right: 8px; top: 50%; transform: translateY(-50%); width: 34px !important; height: 34px !important; border-radius: 50%; border: 0; background: #f6f0e2; color: var(--ink, #351e16); font-size: 1.4rem !important; line-height: 1; display: grid; place-items: center; padding: 0 0 3px; box-shadow: 0 6px 16px -8px rgba(53, 30, 22, .6); }
 @media (min-width: 900px) { .chips-wrap { margin: 0 0 12px; } html body #chips { padding-right: 12px !important; } .chips-next { display: none !important; } }
+/* Celular: todas as categorias visíveis de uma vez, sem arrastar para o lado */
+@media (max-width: 899px) {
+  html body .chips-wrap { position: static !important; margin: 0 0 10px !important; background: none !important; }
+  html body #chips { flex-wrap: wrap !important; justify-content: center !important; overflow: visible !important; scroll-snap-type: none !important; -webkit-mask-image: none !important; mask-image: none !important; padding: 6px 10px 8px !important; gap: 6px !important; }
+  html body #chips .chip { flex: 0 1 auto !important; min-height: 32px !important; padding: 3px 10px 3px 3px !important; font-size: .74rem !important; white-space: nowrap; }
+  html body #chips .chip__ic { width: 24px !important; height: 24px !important; font-size: .9rem !important; }
+  html body .chips-next { display: none !important; }
+}
 html body .site-header .header__inner { align-items: center !important; }
 html body .brand { align-self: center !important; margin: 0 !important; display: grid !important; place-items: center; }
 html body .brand img { display: block !important; margin: 0 !important; box-shadow: 0 0 0 1px rgba(53, 30, 22, .12), 0 3px 8px -4px rgba(53, 30, 22, .55) !important; }
