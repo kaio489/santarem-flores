@@ -1522,60 +1522,19 @@ html body #order .oc__back{font-size:12px;min-height:44px}
 html body #order .oc__err{font-size:12px;line-height:1.4;margin:0 0 8px}
 @media(max-width:600px){html body #order{width:calc(100vw - 16px);max-width:calc(100vw - 16px);border-radius:16px}html body #order-inner,html body #order .oc{height:calc(100dvh - 22px)}html body #order .oc__progress{font-size:10px}html body #order .oc__progress b{width:22px;height:22px;font-size:10px}html body #order .oc__progress li{gap:4px}}
 @media(max-height:700px){html body #order .oc__h{padding:12px 15px 7px}html body #order .oc__progress{padding:0 15px 8px}html body #order .oc__b{padding:9px 15px}html body #order .oc--compact .oc__b{gap:9px}html body #order .oc__f{padding:9px 15px max(9px,env(safe-area-inset-bottom))}html body #order .oc__t{font-size:21px}html body #order .oc__s{font-size:11px}}
-</style><style id="schedule-mobile-fit">/* Native date/time controls must fit their grid tracks, including on iPhone. */
-html body #order .oc--compact .oc__schedule {
-  grid-template-columns: minmax(0, 1.12fr) minmax(0, 1fr);
-  align-items: start;
-  min-width: 0;
-  gap: 10px;
-}
-html body #order .oc--compact .oc__schedule > .oc__fl {
-  display: flex;
-  flex-direction: column;
-  min-width: 0;
-  max-width: 100%;
-}
-html body #order .oc--compact .oc__schedule input {
-  -webkit-appearance: none;
-  appearance: none;
-  display: block;
-  width: 100%;
-  min-width: 0;
-  max-width: 100%;
-  height: 48px;
-  min-height: 48px;
-  max-height: 48px;
-  margin: 0;
-  padding: 10px;
-  box-sizing: border-box;
-  border-radius: 12px;
-  font-size: 16px;
-  line-height: 26px;
-  text-align: left;
-  color-scheme: light;
-}
-html body #order .oc__schedule input::-webkit-date-and-time-value {
-  min-width: 0;
-  min-height: 26px;
-  text-align: left;
-}
-html body #order .oc__schedule input::-webkit-datetime-edit {
-  min-width: 0;
-  padding: 0;
-}
-html body #order .oc__schedule input::-webkit-calendar-picker-indicator {
-  flex: none;
-  width: 18px;
-  height: 18px;
-  margin: 0 0 0 3px;
-  padding: 0;
-  opacity: .65;
-}
-@media (max-width: 359px) {
-  html body #order .oc--compact .oc__schedule {
-    grid-template-columns: minmax(0, 1fr);
-  }
-}
+</style><style id="checkout-periods">html body #order .oc__periods{border:0;margin:0;padding:0;min-width:0}
+html body #order .oc__periods legend{padding:0;margin-bottom:8px;font-size:12px;font-weight:500}
+html body #order .oc__period-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+html body #order .oc__period{position:relative;min-width:0;cursor:pointer}
+html body #order .oc__period input{position:absolute;opacity:0;width:1px;height:1px;margin:0}
+html body #order .oc__period>span{display:flex;flex-direction:column;gap:4px;padding:11px 12px;border:1px solid #c7cfbb;border-radius:12px;background:#fffdf7;color:#17301f;min-height:88px;box-sizing:border-box;line-height:1.25}
+html body #order .oc__period b{font-size:16px;font-weight:600}
+html body #order .oc__period small{font-size:12px;font-style:normal}
+html body #order .oc__period em{font-size:11px;font-style:normal;opacity:.8}
+html body #order .oc__period input:checked+span{background:#17301f;border-color:#17301f;color:#fffdf7;box-shadow:inset 0 0 0 1px #17301f}
+html body #order .oc__period input:focus-visible+span{outline:2px solid #9b7541;outline-offset:3px}
+html body #order .oc__periods.oc__bad .oc__period>span{border-color:#ac3838}
+@media(max-width:359px){html body #order .oc__period-grid{gap:8px}html body #order .oc__period>span{padding:10px;min-height:84px}}
 </style></head>
 <body>
 <style>
@@ -1892,7 +1851,7 @@ html.sp-lock, html.sp-lock body { overflow: hidden !important; }
   <div class="container">
     <h2 id="recebimento-title">Carinho em cada etapa.</h2>
     <div class="fulfillment__grid">
-      <div class="fulfillment__item"><svg class="icon" aria-hidden="true"><use href="#i-delivery"/></svg><h3>Entrega em Santarém</h3><p>Área urbana, com taxa fixa de R$ 20,00. Combine a data e o horário com a equipe pelo WhatsApp.</p></div>
+      <div class="fulfillment__item"><svg class="icon" aria-hidden="true"><use href="#i-delivery"/></svg><h3>Entrega em Santarém</h3><p>Área urbana, com taxa fixa de R$ 20,00. Escolha Manhã ou Tarde ao fazer o pedido.</p></div>
       <div class="fulfillment__item"><svg class="icon" aria-hidden="true"><use href="#i-location"/></svg><h3>Retirada na loja</h3><p>Retire seu presente sem taxa de entrega. Confirme a localização e o horário antes de ir.</p></div>
       <div class="fulfillment__item"><svg class="icon" aria-hidden="true"><use href="#i-clock"/></svg><h3>Horário de atendimento</h3><p>Segunda a sexta, das 8h30 às 18h.<br>Sábado, das 8h às 15h30.</p></div>
     </div>
@@ -2408,7 +2367,7 @@ window.SF_SEED_PRODUCTS = [];
         ${p.category ? `<span class="tag">${esc(p.category)}</span>` : ''}
         <h2 class="detail__title" id="detail-title">${esc(plainName(p.name))}</h2>
         ${priceHTML(p, 'detail__price')}
-        <p class="detail__delivery">Entrega urbana em Santarém: R$ 20,00 · Retirada na loja sem taxa de entrega.<br>Data e horário combinados com a equipe.</p>
+        <p class="detail__delivery">Entrega urbana em Santarém: R$ 20,00 · Retirada na loja sem taxa de entrega.<br>Escolha o período da entrega ou retirada ao fazer o pedido.</p>
         ${p.description ? `<p class="detail__text">${esc(p.description)}</p>` : ''}
         ${p.observation ? `<div class="note"><svg class="icon" aria-hidden="true"><use href="#i-info"/></svg><div><strong>Observação</strong>${esc(p.observation)}</div></div>` : ''}
         ${p.available ? '' : '<div class="note"><svg class="icon" aria-hidden="true"><use href="#i-info"/></svg><div><strong>Indisponível no momento</strong>Fale com a gente para saber quando volta.</div></div>'}
@@ -2685,32 +2644,46 @@ window.SF_SEED_PRODUCTS = [];
       <div class="oc__it"><img src="${esc(x.image)}" alt="${esc(x.name)}" width="76" height="76"><div class="oc__im"><b>${esc(x.name)}</b><small>${x.price != null ? BRL.format(x.price) + ' cada' : 'Valor a combinar'}</small>
         <div class="oc__qr"><div class="oc__q"><button type="button" data-act="dec" data-i="${i}" aria-label="Diminuir quantidade de ${esc(x.name)}">−</button><span>${x.qty}</span><button type="button" data-act="inc" data-i="${i}" aria-label="Aumentar quantidade de ${esc(x.name)}">+</button></div><button class="oc__tr" type="button" data-act="rm" data-i="${i}" aria-label="Remover ${esc(x.name)}"><svg class="icon" aria-hidden="true"><use href="#i-trash-2"/></svg></button></div></div>
         <strong class="oc__lt">${x.price != null ? BRL.format(x.price * x.qty) : ''}</strong></div>`).join(''),
-      `<div class="oc__tot"><span>Subtotal (${n} ${n > 1 ? 'itens' : 'item'})</span><b>${BRL.format(sub())}</b></div><p class="oc__delivery-note">Entrega urbana: + ${BRL.format(FEE)} · Retirada na loja sem taxa de entrega. Escolha a data e a hora na próxima etapa.</p><button class="oc__go" type="button" data-act="tdata">Continuar para seus dados</button><div class="oc__row"><button class="oc__ghost" type="button" data-act="close">Continuar comprando</button><button class="oc__lnk" type="button" data-act="clear">Limpar</button></div>`);
+      `<div class="oc__tot"><span>Subtotal (${n} ${n > 1 ? 'itens' : 'item'})</span><b>${BRL.format(sub())}</b></div><p class="oc__delivery-note">Entrega urbana: + ${BRL.format(FEE)} · Retirada na loja sem taxa de entrega. Escolha Manhã ou Tarde na próxima etapa.</p><button class="oc__go" type="button" data-act="tdata">Continuar para seus dados</button><div class="oc__row"><button class="oc__ghost" type="button" data-act="close">Continuar comprando</button><button class="oc__lnk" type="button" data-act="clear">Limpar</button></div>`);
   }
 
   const SHOP_ZONE = 'America/Santarem', LEAD_TIME = 90 * 60000;
   function shopParts(time) {
-    const parts = Object.fromEntries(new Intl.DateTimeFormat('en-CA', { timeZone: SHOP_ZONE, year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit',hourCycle:'h23' }).formatToParts(time).map(p => [p.type,p.value]));
-    return { date: parts.year+'-'+parts.month+'-'+parts.day, time:parts.hour+':'+parts.minute };
+    const parts=Object.fromEntries(new Intl.DateTimeFormat('en-CA',{timeZone:SHOP_ZONE,year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit',hourCycle:'h23'}).formatToParts(time).map(p=>[p.type,p.value]));
+    return {date:parts.year+'-'+parts.month+'-'+parts.day,time:parts.hour+':'+parts.minute};
   }
-  function earliestSlot() { return shopParts(new Date(Math.ceil((Date.now()+LEAD_TIME)/300000)*300000)); }
-  function scheduledISO(f = S.f) {
-    if (!/^\d{4}-\d{2}-\d{2}$/.test(f.date||'') || !/^\d{2}:\d{2}$/.test(f.time||'')) return '';
-    const d = new Date(f.date+'T'+f.time+':00-03:00');
-    return Number.isFinite(d.getTime()) ? d.toISOString() : '';
+  function periodWindow(period,date,base=Date.now()) {
+    if(!['manha','tarde'].includes(period)||!/^\d{4}-\d{2}-\d{2}$/.test(date||''))return null;
+    const day=new Date(date+'T12:00:00-03:00').getUTCDay();if(!day)return null;
+    const open=period==='manha'?(day===6?'08:00':'08:30'):'12:00';
+    const close=period==='manha'?'12:00':day===6?(window.SF_LOJA==='sf'?'15:30':'16:00'):'18:00';
+    const start=Math.max(Date.parse(date+'T'+open+':00-03:00'),Math.ceil((base+LEAD_TIME)/300000)*300000),end=Date.parse(date+'T'+close+':00-03:00');
+    if(!Number.isFinite(start)||start>=end)return null;
+    return {period,date,start,end,from:shopParts(start).time,to:close,key:period+'|'+date};
   }
-  function appointmentLabel() {
-    const iso=scheduledISO();return iso?new Date(iso).toLocaleString('pt-BR',{timeZone:SHOP_ZONE,day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'}):'';
+  function nextPeriod(period) {
+    const today=shopParts(Date.now()).date;
+    for(let i=0;i<10;i++){const date=new Date(Date.parse(today+'T12:00:00-03:00')+i*86400000).toISOString().slice(0,10),slot=periodWindow(period,date);if(slot)return slot;}
+    return null;
   }
-  function refreshScheduleMin() {
-    const min=earliestSlot(),date=inner.querySelector('[name=date]'),time=inner.querySelector('[name=time]');
-    if(date)date.min=min.date;
-    if(time)time.min=(date?.value||S.f.date)===min.date?min.time:'00:00';
+  function selectedPeriod() {const [period,date]=(S.f.period||'').split('|');return periodWindow(period,date);}
+  function periodDay(date) {
+    const today=shopParts(Date.now()).date,tomorrow=shopParts(Date.now()+86400000).date;
+    const day=date===today?'Hoje':date===tomorrow?'Amanhã':new Date(date+'T12:00:00-03:00').toLocaleDateString('pt-BR',{timeZone:SHOP_ZONE,weekday:'short'}).replace('.','');
+    return day+' · '+date.slice(8)+'/'+date.slice(5,7);
+  }
+  function periodHours(slot) {return slot.from.replace(':','h')+'–'+slot.to.replace(':','h');}
+  function appointmentLabel() {const s=selectedPeriod();return s?(s.period==='manha'?'Manhã':'Tarde')+' · '+periodDay(s.date)+' · '+periodHours(s):'';}
+  function schedulePayload() {
+    const s=selectedPeriod();return s?{periodo:s.period,periodo_data:s.date,d:s.date+'T'+s.to,dz:new Date(s.end).toISOString()}:{};
+  }
+  function refreshScheduleMin() {}
+  function periodFields() {
+    return `<fieldset class="oc__periods"><legend>Período ${isDel()?'da entrega':S.f.mode==='pickup'?'da retirada':'do recebimento'} *</legend><div class="oc__period-grid">${['manha','tarde'].map(period=>{const s=nextPeriod(period);return s?`<label class="oc__period"><input name="period" type="radio" value="${s.key}" ${S.f.period===s.key?'checked':''} required aria-describedby="oc-period-help"><span><b>${period==='manha'?'Manhã':'Tarde'}</b><small>${periodDay(s.date)}</small><em>${periodHours(s)}</em></span></label>`:'';}).join('')}</div></fieldset><p class="oc__schedule-help" id="oc-period-help">Preparo mínimo de <strong>90 minutos</strong>. Confira o dia de cada período. Horário de Santarém.</p>`;
   }
   const messageFields = v => `<details class="oc__optional" ${S.f.note || S.f.comp || S.f.ref || S.f.anon ? 'open' : ''}><summary>Cartão e detalhes opcionais <span>+</span></summary><div class="oc__optional-body">${isDel()?`<div class="oc__2"><label class="oc__fl"><span>Complemento</span><input name="comp" type="text" autocomplete="address-line2" maxlength="40" value="${v('comp')}" placeholder="Apto, bloco…"></label><label class="oc__fl"><span>Referência</span><input name="ref" type="text" maxlength="80" value="${v('ref')}" placeholder="Próximo a…"></label></div>`:''}<label class="oc__fl"><span>Mensagem do cartão</span><textarea name="note" rows="2" maxlength="180" placeholder="Escreva sua mensagem…">${v('note')}</textarea></label>${isDel()?`<label class="oc__ck"><input type="checkbox" name="anon" ${S.f.anon?'checked':''}> Enviar de forma anônima</label>`:''}</div></details>`;
   function rData() {
-    const f=S.f,v=k=>esc(f[k]||''),min=earliestSlot();f.ci='Santarém';
-    if(!f.date&&!f.time){f.date=min.date;f.time=min.time;}
+    const f=S.f,v=k=>esc(f[k]||'');f.ci='Santarém';
     if(f.selfReceive===undefined)f.selfReceive=true;
     const delivery=isDel()&&S.dataPart==='delivery';
     const body=delivery?`
@@ -2724,9 +2697,7 @@ window.SF_SEED_PRODUCTS = [];
       <fieldset class="oc__tp"><legend>Como você quer receber? *</legend><label><input type="radio" name="mode" value="delivery" ${isDel()?'checked':''}><span>Entrega <small>+ ${BRL.format(FEE)}</small></span></label><label><input type="radio" name="mode" value="pickup" ${f.mode==='pickup'?'checked':''}><span>Retirada <small>Sem taxa</small></span></label></fieldset>
       <label class="oc__fl"><span>Seu nome *</span><input name="name" type="text" autocomplete="name" maxlength="80" placeholder="Como você se chama?" value="${v('name')}"></label>
       <label class="oc__fl"><span>Seu WhatsApp *</span><input name="phone" type="tel" autocomplete="tel" maxlength="20" placeholder="(93) 9…" value="${v('phone')}"></label>
-      <p class="oc__compact-heading">${isDel()?'Quando entregar?':f.mode==='pickup'?'Quando vai retirar?':'Escolha a data e a hora'} <small>${isDel()?'1 de 2':''}</small></p>
-      <div class="oc__2 oc__schedule"><label class="oc__fl"><span>Data *</span><input name="date" type="date" min="${min.date}" value="${v('date')}" required></label><label class="oc__fl"><span>Hora *</span><input name="time" type="time" step="60" min="${f.date===min.date?min.time:'00:00'}" value="${v('time')}" required></label></div>
-      <p class="oc__schedule-help">Antecedência mínima de <strong>90 minutos</strong>. Horário de Santarém.</p>
+      ${periodFields()}
       ${f.mode==='pickup'?messageFields(v):''}`;
     shell('Seus dados',delivery?'Quem vai receber e onde entregar.':'Poucos dados para preparar seu presente.',body,
       `<div class="oc__fr"><button class="oc__back" type="button" data-act="${delivery?'tcontact':'tcart'}">← Voltar</button><button class="oc__go" type="button" data-act="${!delivery&&isDel()?'tdelivery':'tpay'}">${!delivery&&isDel()?'Endereço da entrega →':'Revisar pedido'}</button></div>`);
@@ -2758,14 +2729,14 @@ window.SF_SEED_PRODUCTS = [];
   }
 
   function rDone(id) {
-    shell('Pedido registrado! 🌸', '', `<div class="oc__done"><p>Seu pedido <strong>${esc(id)}</strong> foi registrado.</p><p>Seu horário foi registrado. Um atendente vai finalizar o pagamento com você pelo WhatsApp. 💬</p><p>Se a conversa não abriu, toque no botão abaixo.</p></div>`, `<a class="oc__go oc__go--wa" target="_blank" rel="noopener" href="${waLink(id)}">Abrir WhatsApp</a><button class="oc__ghost" type="button" data-act="close">Fechar</button>`);
+    shell('Pedido registrado! 🌸', '', `<div class="oc__done"><p>Seu pedido <strong>${esc(id)}</strong> foi registrado.</p><p>Seu período foi registrado. Um atendente vai finalizar o pagamento com você pelo WhatsApp. 💬</p><p>Se a conversa não abriu, toque no botão abaixo.</p></div>`, `<a class="oc__go oc__go--wa" target="_blank" rel="noopener" href="${waLink(id)}">Abrir WhatsApp</a><button class="oc__ghost" type="button" data-act="close">Fechar</button>`);
   }
 
   /* ---------- lógica ---------- */
   function collect() {
     inner.querySelectorAll('input[name], textarea[name]').forEach((el) => { if (el.type === 'radio') { if (el.checked) S.f[el.name] = el.value; } else if (el.type === 'checkbox') S.f[el.name] = el.checked; else S.f[el.name] = el.value.trim(); });
     if (S.f.selfReceive) { S.f.rn = S.f.name; S.f.rt = S.f.phone; }
-    S.f.d = S.f.date && S.f.time ? S.f.date+'T'+S.f.time : '';S.f.dz=scheduledISO();
+    const slot=schedulePayload();S.f.d=slot.d||'';S.f.dz=slot.dz||'';
   }
   function validate(contactOnly = false) {
     const f = S.f, d = (s) => String(s || '').replace(/\D/g, '').length, bad = []; let msg = '';
@@ -2776,13 +2747,13 @@ window.SF_SEED_PRODUCTS = [];
       if (!f.rn) bad.push('rn'); if (d(f.rt) < 10) bad.push('rt'); if (!f.ru) bad.push('ru'); if (!f.nu) bad.push('nu'); if (!f.ba) bad.push('ba');
       if (!/^santar[eé]m$/i.test(f.ci || '')) { bad.push('ci'); msg = 'No momento entregamos apenas na área urbana de Santarém (taxa fixa de R$ 20,00).'; }
     }
-    if(!f.date)bad.push('date');if(!f.time)bad.push('time');const iso=scheduledISO(f);if(f.date&&f.time&&(!iso||Date.parse(iso)<Date.now()+LEAD_TIME)){bad.push('date','time');msg='Escolha um horário com pelo menos 90 minutos de antecedência.';}
+    if(!f.period||!selectedPeriod()){bad.push('period');msg=f.period?'Este período não está mais disponível. Escolha novamente.':'Escolha Manhã ou Tarde para continuar.';}
     return { bad, msg: msg || (bad.length ? 'Confira os campos destacados para continuar.' : '') };
   }
   function mark(bad) {
     inner.querySelectorAll('.oc__bad').forEach((e) => e.classList.remove('oc__bad'));
     inner.querySelectorAll('[aria-invalid]').forEach((e) => { e.removeAttribute('aria-invalid'); e.removeAttribute('aria-describedby'); });
-    bad.forEach((n) => { const el = inner.querySelector('[name="' + n + '"]'), box = el && (el.closest('.oc__fl') || el.closest('.oc__tp')); if (box) { box.classList.add('oc__bad'); el.setAttribute('aria-invalid','true'); el.setAttribute('aria-describedby','oc-err'); } });
+    bad.forEach((n) => { const el = inner.querySelector('[name="' + n + '"]'), box = el && (el.closest('.oc__fl') || el.closest('.oc__tp') || el.closest('.oc__periods')); if (box) { box.classList.add('oc__bad'); el.setAttribute('aria-invalid','true'); el.setAttribute('aria-describedby','oc-err'); } });
     const first = inner.querySelector('.oc__bad');
     if (first) { first.scrollIntoView({ block: 'center', behavior: 'smooth' }); const inp = first.querySelector('input:not([type=radio]), textarea'); if (inp) setTimeout(() => inp.focus({ preventScroll: true }), 300); }
   }
@@ -2791,10 +2762,10 @@ window.SF_SEED_PRODUCTS = [];
   async function leadNow(force = false) {
     if (leadPending) await leadPending;
     const f = S.f, del = isDel(), address = f.ru ? f.ru + ', ' + f.nu + (f.comp ? ' ' + f.comp : '') + ' - ' + f.ba + ', ' + (f.ci || 'Santarém') + (f.ref ? ' (' + f.ref + ')' : '') : '';
-    const payload = { c: f.name, t: f.phone, i: itemsText(), v: sub(), e: del ? 'Entrega' : 'Retirada', d: f.d, dz: f.dz, rn: f.rn, rt: f.rt, ru: f.ru, nu: f.nu, ba: f.ba, a: del ? address : '', m: f.note, an: del && !!f.anon, loja: 'sf', request_id: checkoutId(), lead: S.lead || undefined, itens: cart.map(x => ({ n: x.name, q: x.qty, p: x.price || 0 })) };
+    const payload = { c: f.name, t: f.phone, i: itemsText(), v: sub(), e: del ? 'Entrega' : 'Retirada', ...schedulePayload(), rn: f.rn, rt: f.rt, ru: f.ru, nu: f.nu, ba: f.ba, a: del ? address : '', m: f.note, an: del && !!f.anon, loja: 'sf', request_id: checkoutId(), lead: S.lead || undefined, itens: cart.map(x => ({ n: x.name, q: x.qty, p: x.price || 0 })) };
     const signature = JSON.stringify({ ...payload, lead: undefined });
     if(S.lead && S.leadSignature === signature) return S.lead;
-    leadPending = rpc('sf_lead_criar_agendado', { p: payload }).then(j => { if (typeof j === 'number') { S.lead = j; S.leadSignature = signature; } return S.lead; }).catch(() => S.lead || 0).finally(() => { leadPending = null; });
+    leadPending = rpc('sf_lead_criar_periodo', { p: payload }).then(j => { if (typeof j === 'number') { S.lead = j; S.leadSignature = signature; } return S.lead; }).catch(() => S.lead || 0).finally(() => { leadPending = null; });
     return await leadPending;
   }
   function waNum() { const a = document.querySelector('[data-wa]'), m = a && /wa\.me\/(\d+)/.exec(a.href || ''); return m ? m[1] : ''; }
@@ -2804,7 +2775,7 @@ window.SF_SEED_PRODUCTS = [];
       '📦 Pedido ' + id, '🗓️ '+(del?'Entrega':'Retirada')+': '+appointmentLabel()+' (Santarém)', '🛍️ ' + itemsText(), '💰 Total: ' + BRL.format(total()) + (del ? ' (inclui entrega de ' + BRL.format(FEE) + ')' : ''), '',
       del ? '🚚 Entrega para ' + f.rn : '🏪 Retirada na loja', del ? '📍 ' + end : '', '👤 ' + f.name + ' · ' + f.phone];
     if (f.note) L.push('💌 Cartão: "' + f.note + '"');
-    L.push('', '📅 Podemos combinar o dia e o horário por aqui? 😊');
+    L.push('', '🌸 Período escolhido acima. Aguardo a confirmação da equipe.');
     return 'https://wa.me/' + waNum() + '?text=' + encodeURIComponent(L.filter((x, i, a) => x !== '' || (a[i - 1] !== '' && i > 0)).join('\n'));
   }
   async function send(m, btn) {
@@ -2813,11 +2784,11 @@ window.SF_SEED_PRODUCTS = [];
     const t0 = btn && btn.innerHTML; if (btn) { btn.disabled = true; btn.innerHTML = '<b>Enviando…</b>'; }
     try {
       await leadNow(true);
-      const id = await rpc('sf_criar_pedido_agendado', { p: { c: f.name, t: f.phone, i: itemsText(), v: sub(), p: label, e: del ? 'Entrega' : 'Retirada', d: f.d, dz: f.dz, a: del ? addr : '', ru: f.ru, nu: f.nu, ba: f.ba, m: f.note, an: del && !!f.anon, rn: f.rn, rt: f.rt, loja: 'sf', request_id: checkoutId(), lead: S.lead || undefined, itens: cart.map((x) => ({ n: x.name, q: x.qty, p: x.price || 0 })) } });
+      const id = await rpc('sf_criar_pedido_periodo', { p: { c: f.name, t: f.phone, i: itemsText(), v: sub(), p: label, e: del ? 'Entrega' : 'Retirada', ...schedulePayload(), a: del ? addr : '', ru: f.ru, nu: f.nu, ba: f.ba, m: f.note, an: del && !!f.anon, rn: f.rn, rt: f.rt, loja: 'sf', request_id: checkoutId(), lead: S.lead || undefined, itens: cart.map((x) => ({ n: x.name, q: x.qty, p: x.price || 0 })) } });
       window.open(waLink(id), '_blank', 'noopener');
       rDone(id); cart = []; save(); S.lead = 0; S.requestId = null; S.f = { mode: '', ci: 'Santarém' };
     } catch (ex) {
-      if(/antecedencia|agendamento_obrigatorio|data_invalida/.test(ex.message)){S.step='data';S.dataPart='contact';rData();refreshScheduleMin();return err('Atualize a data e a hora: precisamos de pelo menos 90 minutos para preparar o pedido.');}
+      if(/periodo_indisponivel|periodo_invalido|antecedencia|agendamento_obrigatorio|data_invalida/.test(ex.message)){S.step='data';S.dataPart='contact';S.f.period='';rData();return err('Este período não está mais disponível. Escolha Manhã ou Tarde novamente; o preparo exige pelo menos 90 minutos.');}
       console.error('[pedido]', ex); if (btn) { btn.disabled = false; btn.innerHTML = t0; }
       err(/pedido_ja_recebido/.test(ex.message) ? 'Este pedido já está no painel. Combine alterações com a equipe pelo WhatsApp.' : /pedido_cancelado/.test(ex.message) ? 'Este pedido foi cancelado. Fale com a equipe para fazer um novo pedido.' : /limite/.test(ex.message) ? 'Muitos pedidos deste telefone em pouco tempo. Tente mais tarde.' : 'Não foi possível enviar o pedido agora. Tente novamente.');
     }
@@ -2833,7 +2804,7 @@ window.SF_SEED_PRODUCTS = [];
     const b = e.target.closest('.oc__bad'); if (b) b.classList.remove('oc__bad');
     e.target.removeAttribute('aria-invalid');
     if (e.target.name === 'mode') { collect();S.f.mode=e.target.value;S.dataPart='contact';rData();return; }
-    if(e.target.name==='date'||e.target.name==='time'){collect();refreshScheduleMin();}
+    if(e.target.name==='period'){collect();}
     if (e.target.name === 'selfReceive') {
       const rn = inner.querySelector('[name="rn"]'), rt = inner.querySelector('[name="rt"]');
       if (e.target.checked) S.recipientBackup = { rn: rn?.value||'', rt: rt?.value||'' };
@@ -2853,7 +2824,7 @@ window.SF_SEED_PRODUCTS = [];
     else if(act==='tcontact'){collect();S.dataPart='contact';rData();}
     else if(act==='tdelivery'){collect();const v=validate(true);if(v.bad.length){mark(v.bad);return err(v.msg);}S.dataPart='delivery';rData();}
     else if (act === 'tcart') { collect(); S.step = 'cart'; rCart(); }
-    else if (act === 'tpay') { collect(); const v = validate();if(v.bad.some(k=>['name','phone','mode','date','time'].includes(k))&&S.dataPart==='delivery'){S.dataPart='contact';rData();} if (v.bad.length) { mark(v.bad); return err(v.msg); } S.step = 'pay'; leadNow(); rPay(); }
+    else if (act === 'tpay') { collect(); const v = validate();if(v.bad.some(k=>['name','phone','mode','period'].includes(k))&&S.dataPart==='delivery'){S.dataPart='contact';rData();} if (v.bad.length) { mark(v.bad); return err(v.msg); } S.step = 'pay'; leadNow(); rPay(); }
     else if (act === 'pay') send(a.dataset.m, a);
   });
 })();
