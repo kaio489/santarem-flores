@@ -13,6 +13,7 @@
    SANTARÉM FLORES — CONFIGURAÇÃO ÚNICA DO SITE
    Este é o ÚNICO arquivo que você precisa editar para publicar.
    ===================================================================== */
+window.SF_LOJA = 'sf';
 window.SF_DB = { url: "https://uuzdbfizpozdacygnzkj.supabase.co", key: "sb_publishable_8f8lPYQvJU5eP9SAPTM-xw_d2Kl8_Y5" };
 window.SF_CONFIG = { DEMO_ADMIN: null,
 
@@ -54,9 +55,9 @@ window.SF_CONFIG = { DEMO_ADMIN: null,
   });
   let cached = null;
   try {
-    const value = JSON.parse(localStorage.getItem('sf:catalog:v3') || localStorage.getItem('sf:catalog:v2') || 'null');
+    const value = JSON.parse(localStorage.getItem('sf:catalog:v4:'+window.SF_LOJA) || 'null');
     const rows = Array.isArray(value) ? value : value && value.rows;
-    if (Array.isArray(rows) && rows.every(row => row && typeof row === 'object')) cached = rows;
+    if (Array.isArray(rows) && rows.every(row => row && typeof row === 'object' && row.loja === window.SF_LOJA)) cached = rows;
   } catch (_) { /* navegação privada ou cache inválido */ }
   if (cached) warm(cached);
   const request = async (name, args) => {
@@ -75,8 +76,8 @@ window.SF_CONFIG = { DEMO_ADMIN: null,
   };
   window.SF_CATALOG_BOOT = {
     cached,
-    first: request('sf_catalogo', { p_off: 0, p_lim: 12 }).then(result => { if (result.ok) warm(result.rows); return result; }),
-    categories: request('sf_categorias', {})
+    first: request('sf_loja_catalogo', { p_loja: window.SF_LOJA, p_off: 0, p_lim: 12 }).then(result => { if (result.ok) warm(result.rows); return result; }),
+    categories: request('sf_loja_categorias', { p_loja: window.SF_LOJA })
   };
 })();
 </script>
@@ -1490,7 +1491,7 @@ html body #grid .card.is-out{opacity:1}
 </style></head>
 <body>
 <style>
-/* Boas-vindas botânicas · duração total: 1.900 ms. */
+/* Boas-vindas botânicas · duração total: 1.400 ms. */
 html.sp-lock, html.sp-lock body { overflow: hidden !important; }
 #splash { position:fixed; inset:0; z-index:2147483600; isolation:isolate; overflow:hidden; color:#fff4df; background:#10291f; font-family:'Jost',system-ui,sans-serif; }
 #splash::before { content:''; position:absolute; inset:0; background:radial-gradient(ellipse at 50% 42%,#34503a 0%,#163327 44%,#081b15 100%); }
@@ -1511,7 +1512,7 @@ html.sp-lock, html.sp-lock body { overflow: hidden !important; }
 #splash .welcome-tagline { margin:9px 0 0; font-size:12px; line-height:1.6; letter-spacing:.07em; color:#efe6d3b3; }
 #splash .welcome-petals { position:absolute; inset:0; pointer-events:none; perspective:800px; }
 #splash .welcome-petal { position:absolute; display:block; width:var(--size); height:var(--size); background-size:300% 300%; background-repeat:no-repeat; opacity:0; filter:drop-shadow(0 5px 5px #0003); }
-#splash.sf-cinema-failsafe { animation:sf-welcome-release .001s 2.2s forwards; }
+#splash.sf-cinema-failsafe { animation:sf-welcome-release .001s 1.7s forwards; }
 @keyframes sf-welcome-release { to { visibility:hidden; pointer-events:none; } }
 @media(max-width:600px) {
  #splash .welcome-bouquet { width:350px; }
@@ -1576,7 +1577,7 @@ html.sp-lock, html.sp-lock body { overflow: hidden !important; }
   var b=ev.target.closest&&ev.target.closest('.chips-next');
   if(b){var ch=document.getElementById('chips');if(ch)ch.scrollBy({left:ch.clientWidth*.6,behavior:'smooth'});}
  });
- var KEY='sf-store:intro:welcome:v3', DURATION=1900;
+ var KEY='sf-store:intro:welcome:v4', DURATION=1400;
  var replay=new URLSearchParams(location.search).get('abertura')==='1';
  if(location.hash==='#sistema'||location.hash.indexOf('#rastrear')===0){sp.remove();return;}
  try { if(!replay&&sessionStorage.getItem(KEY)==='1'){sp.remove();return;} } catch(_){}
@@ -1615,7 +1616,7 @@ html.sp-lock, html.sp-lock body { overflow: hidden !important; }
   });
   sp.querySelectorAll('.welcome-bouquet').forEach(function(img,i){
    var angle=i?203:24;
-   move(img,[{opacity:0,transform:'translateY('+(i?-35:35)+'px) rotate('+(angle+(i?5:-5))+'deg) scale(1.06)'},{opacity:i?.8:1,transform:'translateY(0) rotate('+angle+'deg) scale(1)'}],{duration:1216,delay:0});
+   move(img,[{opacity:0,transform:'translateY('+(i?-35:35)+'px) rotate('+(angle+(i?5:-5))+'deg) scale(1.06)'},{opacity:i?.8:1,transform:'translateY(0) rotate('+angle+'deg) scale(1)'}],{duration:896,delay:0});
   });
   move(sp.querySelector('.welcome-halo'),[{opacity:0,transform:'scale(.92)'},{opacity:1,transform:'scale(1)'}],{duration:728,delay:52});
   var atlas=document.getElementById('sf-botanicals-data').textContent.trim();
@@ -1626,7 +1627,7 @@ html.sp-lock, html.sp-lock body { overflow: hidden !important; }
    el.style.cssText='left:'+p[0]+'%;top:'+p[1]+'%;--size:'+p[2]+'px;background-position:'+(p[3]%3*50)+'% '+(Math.floor(p[3]/3)*50)+'%;';
    el.style.backgroundImage='url("'+atlas+'")';field.appendChild(el);
    var spin=i*37,dx=i%2?15:-17;
-   move(el,[{opacity:0,transform:'translate3d(0,-30px,0) rotate('+spin+'deg) rotateY(25deg)',offset:0},{opacity:.75,offset:.22},{opacity:.7,offset:.8},{opacity:0,transform:'translate3d('+dx+'px,55px,0) rotate('+(spin+65)+'deg) rotateY(-35deg)',offset:1}],{duration:1824,delay:i*14.44,easing:'linear'});
+   move(el,[{opacity:0,transform:'translate3d(0,-30px,0) rotate('+spin+'deg) rotateY(25deg)',offset:0},{opacity:.75,offset:.22},{opacity:.7,offset:.8},{opacity:0,transform:'translate3d('+dx+'px,55px,0) rotate('+(spin+65)+'deg) rotateY(-35deg)',offset:1}],{duration:1344,delay:i*10.64,easing:'linear'});
   });
  } catch(_) { /* O texto e o prazo continuam ativos se os efeitos falharem. */ }
 })();
@@ -1819,7 +1820,7 @@ html.sp-lock, html.sp-lock body { overflow: hidden !important; }
       <nav class="footer__navigation" aria-label="Navegação do rodapé"><p class="footer__title">Encontre seu presente</p><a href="#buques" data-filter="__all">Todo o catálogo</a><a href="#buques" data-filter="__favs">Meus favoritos</a><a href="#recebimento">Entrega e retirada</a></nav>
       <div class="footer__contact"><p class="footer__title">Vamos conversar?</p><ul><li><a data-wa href="#"><svg class="icon" aria-hidden="true"><use href="#i-whatsapp"/></svg><span data-wa-label>WhatsApp</span></a></li><li><a href="https://www.instagram.com/santarem_flores/" target="_blank" rel="noopener noreferrer"><svg class="icon" aria-hidden="true"><use href="#i-instagram"/></svg><span>@santarem_flores</span></a></li></ul><div class="footer__social" hidden></div></div>
     </div>
-    <div class="footer__bottom"><p>© Santarém Flores · Todos os direitos reservados.</p><button id="replay-intro" type="button" aria-label="Rever abertura de 1,9 segundos">Rever abertura</button><a class="sf-entry" href="painel.html" rel="nofollow">Acesso da equipe</a></div>
+    <div class="footer__bottom"><p>© Santarém Flores · Todos os direitos reservados.</p><button id="replay-intro" type="button" aria-label="Rever abertura de 1,4 segundos">Rever abertura</button><a class="sf-entry" href="painel.html" rel="nofollow">Acesso da equipe</a></div>
   </div>
   <button class="rose" type="button" data-mode="down" aria-label="Ver os buquês">
     <svg class="rose__ring" viewBox="0 0 64 64" aria-hidden="true"><circle class="rose__track" cx="32" cy="32" r="29"/><circle class="rose__bar" cx="32" cy="32" r="29"/></svg>
@@ -1948,7 +1949,7 @@ window.SF_SEED_PRODUCTS = [];
   }
   const demoReset = () => store.remove('sf:demo-products');
 
-  const CK = 'sf:catalog:v3', DBH = window.SF_DB;
+  const CK = 'sf:catalog:v4:'+window.SF_LOJA, DBH = window.SF_DB;
   let catalogState = 'loading', catalogNotice = '', catalogComplete = false, loadCycle = 0, retrying = false;
   const rpcCat = async (fn, a) => {
     const controller = new AbortController(), timer = setTimeout(() => controller.abort(), 12000);
@@ -1977,9 +1978,9 @@ window.SF_SEED_PRODUCTS = [];
     if (!cached) {
       try { const value = JSON.parse(localStorage.getItem(CK) || 'null'); cached = value && value.rows; } catch (_) {}
     }
-    const validCache = Array.isArray(cached) && cached.length && cached.every(row => row && typeof row === 'object');
+    const validCache = Array.isArray(cached) && cached.length && cached.every(row => row && typeof row === 'object' && row.loja === window.SF_LOJA);
     if (validCache) { catalogState = 'ready'; setRows(cached); }
-    const categories = boot ? boot.categories : rpcCat('sf_categorias').then(rows => ({ ok: true, rows }));
+    const categories = boot ? boot.categories : rpcCat('sf_loja_categorias', { p_loja: window.SF_LOJA }).then(rows => ({ ok: true, rows }));
     categories.then(result => { if (cycle === loadCycle && result.ok && Array.isArray(result.rows)) { window.SF_CATS = result.rows; renderChips(); } }).catch(() => {});
     const all = [], seen = new Set();
     const publish = complete => {
@@ -1990,7 +1991,7 @@ window.SF_SEED_PRODUCTS = [];
     };
     try {
       let limit = 12, offset = 0;
-      let result = boot ? await boot.first : { ok: true, rows: await rpcCat('sf_catalogo', { p_off: 0, p_lim: limit }) };
+      let result = boot ? await boot.first : { ok: true, rows: await rpcCat('sf_loja_catalogo', { p_loja: window.SF_LOJA, p_off: 0, p_lim: limit }) };
       for (;;) {
         if (cycle !== loadCycle) return [];
         if (!result.ok || !Array.isArray(result.rows)) throw new Error('Catálogo indisponível');
@@ -2000,7 +2001,7 @@ window.SF_SEED_PRODUCTS = [];
         publish(complete);
         if (complete) return all;
         offset += page.length; limit = 48;
-        result = { ok: true, rows: await rpcCat('sf_catalogo', { p_off: offset, p_lim: limit }) };
+        result = { ok: true, rows: await rpcCat('sf_loja_catalogo', { p_loja: window.SF_LOJA, p_off: offset, p_lim: limit }) };
       }
     } catch (_) {
       if (cycle !== loadCycle) return [];
@@ -2297,7 +2298,7 @@ window.SF_SEED_PRODUCTS = [];
   function openDetail(id) {
     const p = products.find((x) => x.id === id);
     if (!p) return;
-    if (!p.full) { p.full = 'l'; rpcCat('sf_produto', { p_id: p.id }).then((f) => { if (f && f.main_image) { p.image = f.main_image; p.gallery = Array.isArray(f.gallery_images) ? f.gallery_images.filter(Boolean) : []; p.full = true; if (detail.open && dState && dState.p === p) openDetail(id); } else p.full = false; }).catch(() => { p.full = false; }); }
+    if (!p.full) { p.full = 'l'; rpcCat('sf_loja_produto', { p_loja: window.SF_LOJA, p_id: p.id }).then((f) => { if (f && f.main_image) { p.image = f.main_image; p.gallery = Array.isArray(f.gallery_images) ? f.gallery_images.filter(Boolean) : []; p.full = true; if (detail.open && dState && dState.p === p) openDetail(id); } else p.full = false; }).catch(() => { p.full = false; }); }
     const imgs = [p.image, ...p.gallery];
     dState = { p, imgs, idx: 0 };
     const multi = imgs.length > 1;
@@ -2520,7 +2521,7 @@ window.SF_SEED_PRODUCTS = [];
 
   function setRows(rows) {
     if (catalogState === 'loading' || rows.length) catalogState = 'ready';
-    products = rows
+    products = rows.filter(row => row.loja === window.SF_LOJA)
       .map(normalize)
       .filter((p) => p.active && p.name && p.image)
       .sort((a, b) => a.order - b.order);
@@ -2550,7 +2551,7 @@ window.SF_SEED_PRODUCTS = [];
   const SF = window.SF; if (!SF) return;
   const { $, esc, BRL, plainName } = SF, DB = window.SF_DB, PAY = window.SF_PAY || { enabled: false };
   /* gateway futuro: window.SF_PAY = { enabled: true, start({ id, amount, method, name, phone }) -> { checkoutUrl } ou { pixCode } } */
-  const FEE = 20, KEY = 'sf-store:cart', dlg = $('#order'), inner = $('#order-inner');
+  const FEE = 20, KEY = 'sf-store:cart:v2', dlg = $('#order'), inner = $('#order-inner');
   let cart = [], S = { step: 'cart', f: { mode: '', ci: 'Santarém' }, lead: 0 };
   try { cart = JSON.parse(localStorage.getItem(KEY) || '[]').filter((x) => x && x.id); } catch (_) { cart = []; }
   const rpc = (fn, a) => fetch(DB.url + '/rest/v1/rpc/' + fn, { method: 'POST', headers: { apikey: DB.key, 'Content-Type': 'application/json' }, body: JSON.stringify(a || {}) })
