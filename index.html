@@ -1535,6 +1535,16 @@ html body #order .oc__period input:checked+span{background:#17301f;border-color:
 html body #order .oc__period input:focus-visible+span{outline:2px solid #9b7541;outline-offset:3px}
 html body #order .oc__periods.oc__bad .oc__period>span{border-color:#ac3838}
 @media(max-width:359px){html body #order .oc__period-grid{gap:8px}html body #order .oc__period>span{padding:10px;min-height:84px}}
+</style><style id="checkout-payment-choice">html body #order .oc__payment{border:0;min-width:0;margin:0;padding:0}
+html body #order .oc__payment legend{font-size:12px;font-weight:500;padding:0;margin-bottom:8px}
+html body #order .oc__payment-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+html body #order .oc__payment-grid label{position:relative;min-width:0;cursor:pointer}
+html body #order .oc__payment input{position:absolute;opacity:0;width:1px;height:1px;margin:0}
+html body #order .oc__payment-grid span{display:flex;justify-content:center;align-items:center;min-height:44px;padding:8px 5px;border:1px solid #c7cfbb;border-radius:10px;background:#fffdf7;color:#17301f;font-size:13px;box-sizing:border-box;line-height:1.25}
+html body #order .oc__payment input:checked+span{background:#17301f;color:#fffdf7;border-color:#17301f;font-weight:600}
+html body #order .oc__payment input:focus-visible+span{outline:2px solid #9b7541;outline-offset:3px}
+html body #order .oc__payment.oc__bad .oc__payment-grid span{border-color:#ac3838}
+html body #order #oc-payment-help{font-size:11px;line-height:1.4;margin:7px 0 0;color:var(--ink-soft)}
 </style></head>
 <body>
 <style>
@@ -2682,6 +2692,9 @@ window.SF_SEED_PRODUCTS = [];
     return `<fieldset class="oc__periods"><legend>Período ${isDel()?'da entrega':S.f.mode==='pickup'?'da retirada':'do recebimento'} *</legend><div class="oc__period-grid">${['manha','tarde'].map(period=>{const s=nextPeriod(period);return s?`<label class="oc__period"><input name="period" type="radio" value="${s.key}" ${S.f.period===s.key?'checked':''} required aria-describedby="oc-period-help"><span><b>${period==='manha'?'Manhã':'Tarde'}</b><small>${periodDay(s.date)}</small><em>${periodHours(s)}</em></span></label>`:'';}).join('')}</div></fieldset><p class="oc__schedule-help" id="oc-period-help">Preparo mínimo de <strong>90 minutos</strong>. Confira o dia de cada período. Horário de Santarém.</p>`;
   }
   const messageFields = v => `<details class="oc__optional" ${S.f.note || S.f.comp || S.f.ref || S.f.anon ? 'open' : ''}><summary>Cartão e detalhes opcionais <span>+</span></summary><div class="oc__optional-body">${isDel()?`<div class="oc__2"><label class="oc__fl"><span>Complemento</span><input name="comp" type="text" autocomplete="address-line2" maxlength="40" value="${v('comp')}" placeholder="Apto, bloco…"></label><label class="oc__fl"><span>Referência</span><input name="ref" type="text" maxlength="80" value="${v('ref')}" placeholder="Próximo a…"></label></div>`:''}<label class="oc__fl"><span>Mensagem do cartão</span><textarea name="note" rows="2" maxlength="180" placeholder="Escreva sua mensagem…">${v('note')}</textarea></label>${isDel()?`<label class="oc__ck"><input type="checkbox" name="anon" ${S.f.anon?'checked':''}> Enviar de forma anônima</label>`:''}</div></details>`;
+  function paymentFields() {
+    return `<fieldset class="oc__payment"><legend>Como pretende pagar? *</legend><div class="oc__payment-grid">${['Pix','Cartão','Dinheiro'].map(method=>`<label><input type="radio" name="payment" value="${method}" ${S.f.payment===method?'checked':''} required aria-describedby="oc-payment-help"><span>${method}</span></label>`).join('')}</div><p id="oc-payment-help">O pagamento será confirmado pela equipe.</p></fieldset>`;
+  }
   function rData() {
     const f=S.f,v=k=>esc(f[k]||'');f.ci='Santarém';
     if(f.selfReceive===undefined)f.selfReceive=true;
@@ -2693,12 +2706,13 @@ window.SF_SEED_PRODUCTS = [];
       <label class="oc__ck oc__self"><input type="checkbox" name="selfReceive" ${f.selfReceive?'checked':''}> Eu mesmo vou receber</label>
       <p class="oc__delivery-note" id="oc-self-note" ${f.selfReceive?'':'hidden'}>Recebimento: ${v('name')} · ${v('phone')}</p>
       <div class="oc__recipient-fields" id="oc-recipient" ${f.selfReceive?'hidden':''}><label class="oc__fl"><span>Quem recebe *</span><input name="rn" type="text" autocomplete="section-recipient name" maxlength="80" placeholder="Nome do destinatário" value="${v('rn')}"></label><label class="oc__fl"><span>Telefone de quem recebe *</span><input name="rt" type="tel" autocomplete="section-recipient tel" maxlength="20" placeholder="(93) 9…" value="${v('rt')}"></label></div>
-      ${messageFields(v)}`:`
+      ${messageFields(v)}
+      ${paymentFields()}`:`
       <fieldset class="oc__tp"><legend>Como você quer receber? *</legend><label><input type="radio" name="mode" value="delivery" ${isDel()?'checked':''}><span>Entrega <small>+ ${BRL.format(FEE)}</small></span></label><label><input type="radio" name="mode" value="pickup" ${f.mode==='pickup'?'checked':''}><span>Retirada <small>Sem taxa</small></span></label></fieldset>
       <label class="oc__fl"><span>Seu nome *</span><input name="name" type="text" autocomplete="name" maxlength="80" placeholder="Como você se chama?" value="${v('name')}"></label>
       <label class="oc__fl"><span>Seu WhatsApp *</span><input name="phone" type="tel" autocomplete="tel" maxlength="20" placeholder="(93) 9…" value="${v('phone')}"></label>
       ${periodFields()}
-      ${f.mode==='pickup'?messageFields(v):''}`;
+      ${f.mode==='pickup'?messageFields(v)+paymentFields():''}`;
     shell('Seus dados',delivery?'Quem vai receber e onde entregar.':'Poucos dados para preparar seu presente.',body,
       `<div class="oc__fr"><button class="oc__back" type="button" data-act="${delivery?'tcontact':'tcart'}">← Voltar</button><button class="oc__go" type="button" data-act="${!delivery&&isDel()?'tdelivery':'tpay'}">${!delivery&&isDel()?'Endereço da entrega →':'Revisar pedido'}</button></div>`);
     inner.querySelector('.oc').classList.add('oc--compact');
@@ -2724,7 +2738,8 @@ window.SF_SEED_PRODUCTS = [];
     const del = isDel();
     shell('Resumo do pedido', `${esc(itemsText())}<br>${del ? 'Entrega em Santarém' : 'Retirada na loja'}`, `
       <div class="oc__sum"><div><span>Produtos</span><b>${BRL.format(sub())}</b></div>${del ? `<div><span>Taxa de entrega (Santarém)</span><b>${BRL.format(FEE)}</b></div>` : ''}<div class="oc__sumt"><span>Total</span><b>${BRL.format(total())}</b></div></div>
-      <div class="oc__brief"><strong>${del?'Entrega':'Retirada'} agendada</strong>${esc(appointmentLabel())}<br><small>Horário de Santarém</small></div>`,
+      <div class="oc__brief"><strong>${del?'Entrega':'Retirada'} agendada</strong>${esc(appointmentLabel())}<br><small>Horário de Santarém</small></div>
+      <div class="oc__brief"><strong>Forma de pagamento</strong>${esc(S.f.payment)}<br><small>Aguardando confirmação da equipe.</small></div>`,
       '<button class="oc__go oc__go--wa" type="button" data-act="pay" data-m="atend">Finalizar com a equipe no WhatsApp</button><button class="oc__back" type="button" data-act="tdata">← Voltar aos dados</button>');
   }
 
@@ -2748,12 +2763,13 @@ window.SF_SEED_PRODUCTS = [];
       if (!/^santar[eé]m$/i.test(f.ci || '')) { bad.push('ci'); msg = 'No momento entregamos apenas na área urbana de Santarém (taxa fixa de R$ 20,00).'; }
     }
     if(!f.period||!selectedPeriod()){bad.push('period');msg=f.period?'Este período não está mais disponível. Escolha novamente.':'Escolha Manhã ou Tarde para continuar.';}
+    if(!contactOnly&&!['Pix','Cartão','Dinheiro'].includes(f.payment)){bad.push('payment');if(!msg)msg='Escolha Pix, Cartão ou Dinheiro para continuar.';}
     return { bad, msg: msg || (bad.length ? 'Confira os campos destacados para continuar.' : '') };
   }
   function mark(bad) {
     inner.querySelectorAll('.oc__bad').forEach((e) => e.classList.remove('oc__bad'));
     inner.querySelectorAll('[aria-invalid]').forEach((e) => { e.removeAttribute('aria-invalid'); e.removeAttribute('aria-describedby'); });
-    bad.forEach((n) => { const el = inner.querySelector('[name="' + n + '"]'), box = el && (el.closest('.oc__fl') || el.closest('.oc__tp') || el.closest('.oc__periods')); if (box) { box.classList.add('oc__bad'); el.setAttribute('aria-invalid','true'); el.setAttribute('aria-describedby','oc-err'); } });
+    bad.forEach((n) => { const el = inner.querySelector('[name="' + n + '"]'), box = el && (el.closest('.oc__fl') || el.closest('.oc__tp') || el.closest('.oc__periods') || el.closest('.oc__payment')); if (box) { box.classList.add('oc__bad'); el.setAttribute('aria-invalid','true'); el.setAttribute('aria-describedby','oc-err'); } });
     const first = inner.querySelector('.oc__bad');
     if (first) { first.scrollIntoView({ block: 'center', behavior: 'smooth' }); const inp = first.querySelector('input:not([type=radio]), textarea'); if (inp) setTimeout(() => inp.focus({ preventScroll: true }), 300); }
   }
@@ -2762,7 +2778,7 @@ window.SF_SEED_PRODUCTS = [];
   async function leadNow(force = false) {
     if (leadPending) await leadPending;
     const f = S.f, del = isDel(), address = f.ru ? f.ru + ', ' + f.nu + (f.comp ? ' ' + f.comp : '') + ' - ' + f.ba + ', ' + (f.ci || 'Santarém') + (f.ref ? ' (' + f.ref + ')' : '') : '';
-    const payload = { c: f.name, t: f.phone, i: itemsText(), v: sub(), e: del ? 'Entrega' : 'Retirada', ...schedulePayload(), rn: f.rn, rt: f.rt, ru: f.ru, nu: f.nu, ba: f.ba, a: del ? address : '', m: f.note, an: del && !!f.anon, loja: 'sf', request_id: checkoutId(), lead: S.lead || undefined, itens: cart.map(x => ({ n: x.name, q: x.qty, p: x.price || 0 })) };
+    const payload = { p:f.payment, c: f.name, t: f.phone, i: itemsText(), v: sub(), e: del ? 'Entrega' : 'Retirada', ...schedulePayload(), rn: f.rn, rt: f.rt, ru: f.ru, nu: f.nu, ba: f.ba, a: del ? address : '', m: f.note, an: del && !!f.anon, loja: 'sf', request_id: checkoutId(), lead: S.lead || undefined, itens: cart.map(x => ({ n: x.name, q: x.qty, p: x.price || 0 })) };
     const signature = JSON.stringify({ ...payload, lead: undefined });
     if(S.lead && S.leadSignature === signature) return S.lead;
     leadPending = rpc('sf_lead_criar_periodo', { p: payload }).then(j => { if (typeof j === 'number') { S.lead = j; S.leadSignature = signature; } return S.lead; }).catch(() => S.lead || 0).finally(() => { leadPending = null; });
@@ -2772,7 +2788,7 @@ window.SF_SEED_PRODUCTS = [];
   function waLink(id) {
     const f = S.f, del = isDel(), end = f.ru ? f.ru + ', ' + f.nu + (f.comp ? ' ' + f.comp : '') + ' - ' + f.ba + ', ' + (f.ci || 'Santarém') + (f.ref ? ' (' + f.ref + ')' : '') : '';
     const L = ['Olá! 🌸 Quero finalizar o meu pedido com um atendente.', '',
-      '📦 Pedido ' + id, '🗓️ '+(del?'Entrega':'Retirada')+': '+appointmentLabel()+' (Santarém)', '🛍️ ' + itemsText(), '💰 Total: ' + BRL.format(total()) + (del ? ' (inclui entrega de ' + BRL.format(FEE) + ')' : ''), '',
+      '📦 Pedido ' + id, '🗓️ '+(del?'Entrega':'Retirada')+': '+appointmentLabel()+' (Santarém)', '🛍️ ' + itemsText(), '💳 Forma de pagamento: '+f.payment, '💰 Total: ' + BRL.format(total()) + (del ? ' (inclui entrega de ' + BRL.format(FEE) + ')' : ''), '',
       del ? '🚚 Entrega para ' + f.rn : '🏪 Retirada na loja', del ? '📍 ' + end : '', '👤 ' + f.name + ' · ' + f.phone];
     if (f.note) L.push('💌 Cartão: "' + f.note + '"');
     L.push('', '🌸 Período escolhido acima. Aguardo a confirmação da equipe.');
@@ -2780,7 +2796,7 @@ window.SF_SEED_PRODUCTS = [];
   }
   async function send(m, btn) {
     const f = S.f, del = isDel(), addr = f.ru ? f.ru + ', ' + f.nu + (f.comp ? ' ' + f.comp : '') + ' - ' + f.ba + ', ' + (f.ci || 'Santarém') + (f.ref ? ' (' + f.ref + ')' : '') : '';
-    const label = 'Com atendente';
+    const label = f.payment;
     const t0 = btn && btn.innerHTML; if (btn) { btn.disabled = true; btn.innerHTML = '<b>Enviando…</b>'; }
     try {
       await leadNow(true);
