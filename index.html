@@ -1545,6 +1545,20 @@ html body #order .oc__payment input:checked+span{background:#17301f;color:#fffdf
 html body #order .oc__payment input:focus-visible+span{outline:2px solid #9b7541;outline-offset:3px}
 html body #order .oc__payment.oc__bad .oc__payment-grid span{border-color:#ac3838}
 html body #order #oc-payment-help{font-size:11px;line-height:1.4;margin:7px 0 0;color:var(--ink-soft)}
+</style><style id="unified-customer-form">html body #order .oc--unified .oc__2{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+html body #order .oc--unified .oc__b{gap:11px}
+html body #order .oc--unified .oc__fl>span{font-size:11px;line-height:1.4}
+html body #order .oc--unified input:not([type=radio]):not([type=checkbox]){min-height:43px;padding:9px 10px;font-size:16px}
+html body #order .oc--unified .oc__recipient-fields[hidden]{display:none}
+html body #order .oc--unified .oc__schedule{grid-template-columns:minmax(0,1.12fr) minmax(0,1fr)}
+html body #order .oc--unified .oc__schedule>.oc__fl{display:flex;flex-direction:column;min-width:0}
+html body #order .oc--unified .oc__schedule input{appearance:none;-webkit-appearance:none;display:block;width:100%;min-width:0;max-width:100%;height:44px;min-height:44px;margin:0;line-height:24px;box-sizing:border-box;text-align:left;color-scheme:light}
+html body #order .oc--unified .oc__schedule input::-webkit-date-and-time-value{text-align:left;min-width:0;min-height:24px}
+html body #order .oc--unified .oc__schedule input::-webkit-datetime-edit{padding:0;min-width:0}
+html body #order .oc--unified .oc__schedule input::-webkit-calendar-picker-indicator{flex:none;width:18px;height:18px;padding:0;margin:0 0 0 3px}
+html body #order .oc--unified input[readonly]{background:#f2f0e8}
+html body #order .oc--unified .oc__payment p{margin-top:5px}
+@media(max-width:359px){html body #order .oc--unified .oc__schedule{grid-template-columns:minmax(0,1fr)}}
 </style></head>
 <body>
 <style>
@@ -2628,6 +2642,23 @@ window.SF_SEED_PRODUCTS = [];
     b.addEventListener('click', () => { S.step = 'cart'; render(); open(); }); badge();
   })();
 
+    const DRAFT_KEY=KEY+':checkout:v3',PROFILE_KEY=KEY+':profile:v1';let draftTimer=0;
+  function readSaved(key,age){try{const x=JSON.parse(localStorage.getItem(key)||'null');return x&&Date.now()-x.savedAt<age?x:null;}catch(_){return null;}}
+  const savedProfile=readSaved(PROFILE_KEY,30*86400000),savedDraft=readSaved(DRAFT_KEY,86400000);
+  if(savedProfile?.f)S.f={...S.f,...savedProfile.f};
+  if(savedDraft?.f){S.f={...S.f,...savedDraft.f};S.lead=savedDraft.lead||0;S.requestId=savedDraft.requestId||null;S.leadSignature=savedDraft.leadSignature;}
+  function persistCheckout(){clearTimeout(draftTimer);try{localStorage.setItem(DRAFT_KEY,JSON.stringify({savedAt:Date.now(),f:S.f,lead:S.lead,requestId:S.requestId,leadSignature:S.leadSignature}));}catch(_){}}
+  function checkpoint(){if(S.step==='data')collect();persistCheckout();}
+  function rememberCustomer(){
+    const f={ci:'Santarém',selfReceive:true};for(const key of ['name','phone','mode','ru','nu','ba','comp','ref','payment'])if(S.f[key])f[key]=S.f[key];
+    try{localStorage.setItem(PROFILE_KEY,JSON.stringify({savedAt:Date.now(),f}));localStorage.removeItem(DRAFT_KEY);}catch(_){}return f;
+  }
+  inner.addEventListener('input',()=>{clearTimeout(draftTimer);draftTimer=setTimeout(checkpoint,150);});
+  inner.addEventListener('change',()=>{if(S.step==='data')checkpoint();});
+  dlg.addEventListener('close',()=>{if(S.step!=='done')checkpoint();});
+  window.addEventListener('pagehide',checkpoint);
+  document.addEventListener('visibilitychange',()=>{if(document.hidden)checkpoint();});
+
   const open = () => { if (!dlg.open) dlg.showModal(); };
   SF.openOrder = (id) => {
     const p = SF.getProduct(id); if (!p) return;
@@ -2698,25 +2729,19 @@ window.SF_SEED_PRODUCTS = [];
   function rData() {
     const f=S.f,v=k=>esc(f[k]||'');f.ci='Santarém';
     if(f.selfReceive===undefined)f.selfReceive=true;
-    const delivery=isDel()&&S.dataPart==='delivery';
-    const body=delivery?`
-      <p class="oc__compact-heading">Endereço em Santarém <small>2 de 2</small></p>
-      <label class="oc__fl"><span>Rua ou avenida *</span><input name="ru" type="text" autocomplete="address-line1" maxlength="80" placeholder="Nome da rua" value="${v('ru')}"></label>
-      <div class="oc__2 oc__address-row"><label class="oc__fl"><span>Número *</span><input name="nu" type="text" maxlength="12" placeholder="123 ou S/N" value="${v('nu')}"></label><label class="oc__fl"><span>Bairro *</span><input name="ba" type="text" autocomplete="address-level3" maxlength="60" placeholder="Bairro" value="${v('ba')}"></label></div>
-      <label class="oc__ck oc__self"><input type="checkbox" name="selfReceive" ${f.selfReceive?'checked':''}> Eu mesmo vou receber</label>
-      <p class="oc__delivery-note" id="oc-self-note" ${f.selfReceive?'':'hidden'}>Recebimento: ${v('name')} · ${v('phone')}</p>
-      <div class="oc__recipient-fields" id="oc-recipient" ${f.selfReceive?'hidden':''}><label class="oc__fl"><span>Quem recebe *</span><input name="rn" type="text" autocomplete="section-recipient name" maxlength="80" placeholder="Nome do destinatário" value="${v('rn')}"></label><label class="oc__fl"><span>Telefone de quem recebe *</span><input name="rt" type="tel" autocomplete="section-recipient tel" maxlength="20" placeholder="(93) 9…" value="${v('rt')}"></label></div>
-      ${messageFields(v)}
-      ${paymentFields()}`:`
+    const body=`
       <fieldset class="oc__tp"><legend>Como você quer receber? *</legend><label><input type="radio" name="mode" value="delivery" ${isDel()?'checked':''}><span>Entrega <small>+ ${BRL.format(FEE)}</small></span></label><label><input type="radio" name="mode" value="pickup" ${f.mode==='pickup'?'checked':''}><span>Retirada <small>Sem taxa</small></span></label></fieldset>
-      <label class="oc__fl"><span>Seu nome *</span><input name="name" type="text" autocomplete="name" maxlength="80" placeholder="Como você se chama?" value="${v('name')}"></label>
-      <label class="oc__fl"><span>Seu WhatsApp *</span><input name="phone" type="tel" autocomplete="tel" maxlength="20" placeholder="(93) 9…" value="${v('phone')}"></label>
+      <div class="oc__2"><label class="oc__fl"><span>Nome *</span><input name="name" type="text" autocomplete="name" maxlength="80" placeholder="Seu nome" value="${v('name')}"></label><label class="oc__fl"><span>Telefone *</span><input name="phone" type="tel" autocomplete="tel" maxlength="20" placeholder="(93) 9…" value="${v('phone')}"></label></div>
+      ${isDel()?`<label class="oc__ck"><input type="checkbox" name="selfReceive" ${f.selfReceive?'checked':''}> Eu mesmo vou receber</label>
+      <div class="oc__2 oc__recipient-fields" id="oc-recipient" ${f.selfReceive?'hidden':''}><label class="oc__fl"><span>Quem recebe *</span><input name="rn" type="text" autocomplete="section-recipient name" maxlength="80" placeholder="Nome" value="${v('rn')}"></label><label class="oc__fl"><span>Telefone de quem recebe *</span><input name="rt" type="tel" autocomplete="section-recipient tel" maxlength="20" placeholder="(93) 9…" value="${v('rt')}"></label></div>
+      <label class="oc__fl"><span>Rua / Avenida *</span><input name="ru" type="text" autocomplete="address-line1" maxlength="80" placeholder="Nome da rua ou avenida" value="${v('ru')}"></label>
+      <div class="oc__2"><label class="oc__fl"><span>Número *</span><input name="nu" type="text" maxlength="12" placeholder="123 ou S/N" value="${v('nu')}"></label><label class="oc__fl"><span>Complemento</span><input name="comp" type="text" autocomplete="address-line2" maxlength="40" placeholder="Apto, bloco…" value="${v('comp')}"></label></div>
+      <div class="oc__2"><label class="oc__fl"><span>Bairro *</span><input name="ba" type="text" autocomplete="address-level3" maxlength="60" placeholder="Seu bairro" value="${v('ba')}"></label><label class="oc__fl"><span>Cidade</span><input name="ci" type="text" value="Santarém" readonly aria-label="Cidade: Santarém"></label></div>`:''}
       ${periodFields()}
-      ${f.mode==='pickup'?messageFields(v)+paymentFields():''}`;
-    shell('Seus dados',delivery?'Quem vai receber e onde entregar.':'Poucos dados para preparar seu presente.',body,
-      `<div class="oc__fr"><button class="oc__back" type="button" data-act="${delivery?'tcontact':'tcart'}">← Voltar</button><button class="oc__go" type="button" data-act="${!delivery&&isDel()?'tdelivery':'tpay'}">${!delivery&&isDel()?'Endereço da entrega →':'Revisar pedido'}</button></div>`);
-    inner.querySelector('.oc').classList.add('oc--compact');
-    refreshScheduleMin();
+      ${paymentFields()}
+      <details class="oc__optional" ${f.note||f.ref||f.anon?'open':''}><summary>Referência e mensagem do presente (opcional) <span>+</span></summary><div class="oc__optional-body">${isDel()?`<label class="oc__fl"><span>Referência</span><input name="ref" type="text" maxlength="80" placeholder="Ponto de referência" value="${v('ref')}"></label>`:''}<label class="oc__fl"><span>Mensagem do cartão</span><textarea name="note" rows="2" maxlength="180" placeholder="Ex.: Feliz aniversário!">${v('note')}</textarea></label>${isDel()?`<label class="oc__ck"><input type="checkbox" name="anon" ${f.anon?'checked':''}> Enviar de forma anônima</label>`:''}</div></details>`;
+    shell('Seus dados','Preencha os dados e confira o resumo.',body,'<div class="oc__fr"><button class="oc__back" type="button" data-act="tcart">← Voltar</button><button class="oc__go" type="button" data-act="tpay">Ver resumo do pedido →</button></div>');
+    inner.querySelector('.oc').classList.add('oc--compact','oc--unified');refreshScheduleMin();
   }
 
   function syncRecipient() {
@@ -2781,7 +2806,8 @@ window.SF_SEED_PRODUCTS = [];
     const payload = { p:f.payment, c: f.name, t: f.phone, i: itemsText(), v: sub(), e: del ? 'Entrega' : 'Retirada', ...schedulePayload(), rn: f.rn, rt: f.rt, ru: f.ru, nu: f.nu, ba: f.ba, a: del ? address : '', m: f.note, an: del && !!f.anon, loja: 'sf', request_id: checkoutId(), lead: S.lead || undefined, itens: cart.map(x => ({ n: x.name, q: x.qty, p: x.price || 0 })) };
     const signature = JSON.stringify({ ...payload, lead: undefined });
     if(S.lead && S.leadSignature === signature) return S.lead;
-    leadPending = rpc('sf_lead_criar_periodo', { p: payload }).then(j => { if (typeof j === 'number') { S.lead = j; S.leadSignature = signature; } return S.lead; }).catch(() => S.lead || 0).finally(() => { leadPending = null; });
+    persistCheckout();
+    leadPending = rpc('sf_lead_criar_periodo', { p: payload }).then(j => { if (typeof j === 'number') { S.lead = j; S.leadSignature = signature;persistCheckout(); } return S.lead; }).catch(() => S.lead || 0).finally(() => { leadPending = null; });
     return await leadPending;
   }
   function waNum() { const a = document.querySelector('[data-wa]'), m = a && /wa\.me\/(\d+)/.exec(a.href || ''); return m ? m[1] : ''; }
@@ -2799,10 +2825,10 @@ window.SF_SEED_PRODUCTS = [];
     const label = f.payment;
     const t0 = btn && btn.innerHTML; if (btn) { btn.disabled = true; btn.innerHTML = '<b>Enviando…</b>'; }
     try {
-      await leadNow(true);
+      persistCheckout();await leadNow(true);
       const id = await rpc('sf_criar_pedido_periodo', { p: { c: f.name, t: f.phone, i: itemsText(), v: sub(), p: label, e: del ? 'Entrega' : 'Retirada', ...schedulePayload(), a: del ? addr : '', ru: f.ru, nu: f.nu, ba: f.ba, m: f.note, an: del && !!f.anon, rn: f.rn, rt: f.rt, loja: 'sf', request_id: checkoutId(), lead: S.lead || undefined, itens: cart.map((x) => ({ n: x.name, q: x.qty, p: x.price || 0 })) } });
       window.open(waLink(id), '_blank', 'noopener');
-      rDone(id); cart = []; save(); S.lead = 0; S.requestId = null; S.f = { mode: '', ci: 'Santarém' };
+      rDone(id);const profile=rememberCustomer();S.step='done';cart=[];save();S.lead=0;S.requestId=null;S.leadSignature=null;S.f=profile;
     } catch (ex) {
       if(/periodo_indisponivel|periodo_invalido|antecedencia|agendamento_obrigatorio|data_invalida/.test(ex.message)){S.step='data';S.dataPart='contact';S.f.period='';rData();return err('Este período não está mais disponível. Escolha Manhã ou Tarde novamente; o preparo exige pelo menos 90 minutos.');}
       console.error('[pedido]', ex); if (btn) { btn.disabled = false; btn.innerHTML = t0; }
@@ -2819,8 +2845,8 @@ window.SF_SEED_PRODUCTS = [];
   inner.addEventListener('change', (e) => {
     const b = e.target.closest('.oc__bad'); if (b) b.classList.remove('oc__bad');
     e.target.removeAttribute('aria-invalid');
-    if (e.target.name === 'mode') { collect();S.f.mode=e.target.value;S.dataPart='contact';rData();return; }
-    if(e.target.name==='period'){collect();}
+    if (e.target.name === 'mode') { collect();S.f.mode=e.target.value;rData();persistCheckout();return; }
+    if(e.target.name==='period'){collect();persistCheckout();}
     if (e.target.name === 'selfReceive') {
       const rn = inner.querySelector('[name="rn"]'), rt = inner.querySelector('[name="rt"]');
       if (e.target.checked) S.recipientBackup = { rn: rn?.value||'', rt: rt?.value||'' };
@@ -2840,7 +2866,7 @@ window.SF_SEED_PRODUCTS = [];
     else if(act==='tcontact'){collect();S.dataPart='contact';rData();}
     else if(act==='tdelivery'){collect();const v=validate(true);if(v.bad.length){mark(v.bad);return err(v.msg);}S.dataPart='delivery';rData();}
     else if (act === 'tcart') { collect(); S.step = 'cart'; rCart(); }
-    else if (act === 'tpay') { collect(); const v = validate();if(v.bad.some(k=>['name','phone','mode','period'].includes(k))&&S.dataPart==='delivery'){S.dataPart='contact';rData();} if (v.bad.length) { mark(v.bad); return err(v.msg); } S.step = 'pay'; leadNow(); rPay(); }
+    else if (act === 'tpay') { collect(); const v = validate(); if (v.bad.length) { mark(v.bad); return err(v.msg); } S.step = 'pay'; leadNow(); rPay(); }
     else if (act === 'pay') send(a.dataset.m, a);
   });
 })();
