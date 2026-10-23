@@ -1545,7 +1545,8 @@ html body #order .oc__payment input:checked+span{background:#17301f;color:#fffdf
 html body #order .oc__payment input:focus-visible+span{outline:2px solid #9b7541;outline-offset:3px}
 html body #order .oc__payment.oc__bad .oc__payment-grid span{border-color:#ac3838}
 html body #order #oc-payment-help{font-size:11px;line-height:1.4;margin:7px 0 0;color:var(--ink-soft)}
-</style><style id="unified-customer-form">html body #order .oc--unified .oc__2{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+</style><style id="unified-customer-form">html body #order .oc__optional--visible .oc__optional-title{margin:0 0 10px;font-size:12px;line-height:1.4;font-weight:600}
+html body #order .oc--unified .oc__2{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
 html body #order .oc--unified .oc__b{gap:11px}
 html body #order .oc--unified .oc__fl>span{font-size:11px;line-height:1.4}
 html body #order .oc--unified input:not([type=radio]):not([type=checkbox]){min-height:43px;padding:9px 10px;font-size:16px}
@@ -2739,7 +2740,7 @@ window.SF_SEED_PRODUCTS = [];
       <div class="oc__2"><label class="oc__fl"><span>Bairro *</span><input name="ba" type="text" autocomplete="address-level3" maxlength="60" placeholder="Seu bairro" value="${v('ba')}"></label><label class="oc__fl"><span>Cidade</span><input name="ci" type="text" value="Santarém" readonly aria-label="Cidade: Santarém"></label></div>`:''}
       ${periodFields()}
       ${paymentFields()}
-      <details class="oc__optional" ${f.note||f.ref||f.anon?'open':''}><summary>Referência e mensagem do presente (opcional) <span>+</span></summary><div class="oc__optional-body">${isDel()?`<label class="oc__fl"><span>Referência</span><input name="ref" type="text" maxlength="80" placeholder="Ponto de referência" value="${v('ref')}"></label>`:''}<label class="oc__fl"><span>Mensagem do cartão</span><textarea name="note" rows="2" maxlength="180" placeholder="Ex.: Feliz aniversário!">${v('note')}</textarea></label>${isDel()?`<label class="oc__ck"><input type="checkbox" name="anon" ${f.anon?'checked':''}> Enviar de forma anônima</label>`:''}</div></details>`;
+      <section class="oc__optional oc__optional--visible" aria-label="Referência e mensagem do presente"><p class="oc__optional-title">Referência e mensagem do presente (opcional)</p><div class="oc__optional-body">${isDel()?`<label class="oc__fl"><span>Referência</span><input name="ref" type="text" maxlength="80" placeholder="Ponto de referência" value="${v('ref')}"></label>`:''}<label class="oc__fl"><span>Mensagem do cartão</span><textarea name="note" rows="2" maxlength="180" placeholder="Ex.: Feliz aniversário!">${v('note')}</textarea></label>${isDel()?`<label class="oc__ck"><input type="checkbox" name="anon" ${f.anon?'checked':''}> Enviar de forma anônima</label>`:''}</div></section>`;
     shell('Seus dados','Preencha os dados e confira o resumo.',body,'<div class="oc__fr"><button class="oc__back" type="button" data-act="tcart">← Voltar</button><button class="oc__go" type="button" data-act="tpay">Ver resumo do pedido →</button></div>');
     inner.querySelector('.oc').classList.add('oc--compact','oc--unified');refreshScheduleMin();
   }
