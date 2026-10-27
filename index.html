@@ -1535,7 +1535,7 @@ html body #order .oc__periods.oc__bad .oc__period>span{border-color:#ac3838}
 @media(max-width:359px){html body #order .oc__period-grid{gap:8px}html body #order .oc__period>span{padding:10px;min-height:84px}}
 </style><style id="checkout-payment-choice">html body #order .oc__payment{border:0;min-width:0;margin:0;padding:0}
 html body #order .oc__payment legend{font-size:12px;font-weight:500;padding:0;margin-bottom:8px}
-html body #order .oc__payment-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+html body #order .oc__payment-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
 html body #order .oc__payment-grid label{position:relative;min-width:0;cursor:pointer}
 html body #order .oc__payment input{position:absolute;opacity:0;width:1px;height:1px;margin:0}
 html body #order .oc__payment-grid span{display:flex;justify-content:center;align-items:center;min-height:44px;padding:8px 5px;border:1px solid #c7cfbb;border-radius:10px;background:#fffdf7;color:#17301f;font-size:13px;box-sizing:border-box;line-height:1.25}
@@ -2723,10 +2723,10 @@ window.SF_SEED_PRODUCTS = [];
   }
   const messageFields = v => `<details class="oc__optional" ${S.f.note || S.f.comp || S.f.ref || S.f.anon ? 'open' : ''}><summary>Cartão e detalhes opcionais <span>+</span></summary><div class="oc__optional-body">${isDel()?`<div class="oc__2"><label class="oc__fl"><span>Complemento</span><input name="comp" type="text" autocomplete="address-line2" maxlength="40" value="${v('comp')}" placeholder="Apto, bloco…"></label><label class="oc__fl"><span>Referência</span><input name="ref" type="text" maxlength="80" value="${v('ref')}" placeholder="Próximo a…"></label></div>`:''}<label class="oc__fl"><span>Mensagem do cartão</span><textarea name="note" rows="2" maxlength="180" placeholder="Escreva sua mensagem…">${v('note')}</textarea></label>${isDel()?`<label class="oc__ck"><input type="checkbox" name="anon" ${S.f.anon?'checked':''}> Enviar de forma anônima</label>`:''}</div></details>`;
   function paymentFields() {
-    return `<fieldset class="oc__payment"><legend>Como pretende pagar? *</legend><div class="oc__payment-grid">${['Pix','Cartão','Dinheiro'].map(method=>`<label><input type="radio" name="payment" value="${method}" ${S.f.payment===method?'checked':''} required aria-describedby="oc-payment-help"><span>${method}</span></label>`).join('')}</div><p id="oc-payment-help">O pagamento será confirmado pela equipe.</p></fieldset>`;
+    return `<fieldset class="oc__payment"><legend>Como pretende pagar? *</legend><div class="oc__payment-grid">${['Pix','Cartão'].map(method=>`<label><input type="radio" name="payment" value="${method}" ${S.f.payment===method?'checked':''} required aria-describedby="oc-payment-help"><span>${method}</span></label>`).join('')}</div><p id="oc-payment-help">O pagamento será confirmado pela equipe.</p></fieldset>`;
   }
   function rData() {
-    const f=S.f,v=k=>esc(f[k]||'');f.ci='Santarém';
+    const f=S.f,v=k=>esc(f[k]||'');f.ci='Santarém';if(!['Pix','Cartão'].includes(f.payment))f.payment='';
     if(f.selfReceive===undefined)f.selfReceive=true;
     const body=`
       <fieldset class="oc__tp"><legend>Como você quer receber? *</legend><label><input type="radio" name="mode" value="delivery" ${isDel()?'checked':''}><span>Entrega <small>+ ${BRL.format(FEE)}</small></span></label><label><input type="radio" name="mode" value="pickup" ${f.mode==='pickup'?'checked':''}><span>Retirada <small>Sem taxa</small></span></label></fieldset>
@@ -2787,7 +2787,7 @@ window.SF_SEED_PRODUCTS = [];
       if (!/^santar[eé]m$/i.test(f.ci || '')) { bad.push('ci'); msg = 'No momento entregamos apenas na área urbana de Santarém (taxa fixa de R$ 20,00).'; }
     }
     if(!f.period||!selectedPeriod()){bad.push('period');msg=f.period?'Este período não está mais disponível. Escolha novamente.':'Escolha Manhã ou Tarde para continuar.';}
-    if(!contactOnly&&!['Pix','Cartão','Dinheiro'].includes(f.payment)){bad.push('payment');if(!msg)msg='Escolha Pix, Cartão ou Dinheiro para continuar.';}
+    if(!contactOnly&&!['Pix','Cartão'].includes(f.payment)){bad.push('payment');if(!msg)msg='Escolha Pix ou Cartão para continuar.';}
     return { bad, msg: msg || (bad.length ? 'Confira os campos destacados para continuar.' : '') };
   }
   function mark(bad) {
