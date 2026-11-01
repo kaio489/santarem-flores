@@ -2818,14 +2818,14 @@ window.SF_SEED_PRODUCTS = [];
     const L = ['🌷 *NOVO PEDIDO — SANTARÉM FLORES*', '',
       '🛍️ *PRODUTOS*',
       ...cart.map(x => '• ' + x.qty + 'x ' + x.name + ' — ' + BRL.format((x.price || 0) * x.qty)),
-      '', '💰 *TOTAL: ' + BRL.format(total()) + '*', '',
-      '👤 *QUEM FEZ O PEDIDO*', '*Nome:* ' + f.name, 'WhatsApp: ' + f.phone];
+      '',
+      '👤 *QUEM FEZ O PEDIDO*', '*NOME:* ' + f.name, 'WhatsApp: ' + f.phone];
     if (del) {
       const recipientName = f.selfReceive ? f.name : f.rn;
       const recipientPhone = f.selfReceive ? f.phone : f.rt;
       if (recipientName || recipientPhone) {
         L.push('', '🎁 *QUEM VAI RECEBER*');
-        if (recipientName) L.push('*Nome:* ' + recipientName);
+        if (recipientName) L.push('*NOME:* ' + recipientName);
         if (recipientPhone) L.push('Telefone: ' + recipientPhone);
       }
     }
@@ -2833,12 +2833,12 @@ window.SF_SEED_PRODUCTS = [];
     if (dateLabel) L.push('Data: ' + dateLabel);
     if (periodLabel) L.push('Período: ' + periodLabel);
     if (del) {
-      L.push('', '*Endereço:* ' + f.ru + ', ' + f.nu);
+      L.push('', '*ENDEREÇO:* ' + f.ru + ', ' + f.nu);
       if (f.comp) L.push('Complemento: ' + f.comp);
       L.push('Bairro: ' + f.ba, 'Cidade: ' + (f.ci || 'Santarém'));
       if (f.ref) L.push('Referência: ' + f.ref);
     }
-    L.push('', '💳 *FORMA DE PAGAMENTO*', f.payment);
+    L.push('', '💳 *FORMA DE PAGAMENTO*', f.payment, '', '💰 *TOTAL: ' + BRL.format(total()) + '*');
     if (del && f.anon) L.push('', '🔒 Entregar de forma anônima.');
     if (f.note && f.note.trim()) L.push('', '💌 *CARTÃO COM MENSAGEM*', '(escrever exatamente como abaixo)', '', '────────────────', f.note, '────────────────');
     return 'https://wa.me/' + waNum() + '?text=' + encodeURIComponent(L.join('\n'));
