@@ -2811,13 +2811,37 @@ window.SF_SEED_PRODUCTS = [];
   }
   function waNum() { const a = document.querySelector('[data-wa]'), m = a && /wa\.me\/(\d+)/.exec(a.href || ''); return m ? m[1] : ''; }
   function waLink(id) {
-    const f = S.f, del = isDel(), end = f.ru ? f.ru + ', ' + f.nu + (f.comp ? ' ' + f.comp : '') + ' - ' + f.ba + ', ' + (f.ci || 'Santarém') + (f.ref ? ' (' + f.ref + ')' : '') : '';
-    const L = ['Olá! 🌸 Quero finalizar o meu pedido com um atendente.', '',
-      '📦 Pedido ' + id, '🗓️ '+(del?'Entrega':'Retirada')+': '+appointmentLabel()+' (Santarém)', '🛍️ ' + itemsText(), '💳 Forma de pagamento: '+f.payment, '💰 Total: ' + BRL.format(total()) + (del ? ' (inclui entrega de ' + BRL.format(FEE) + ')' : ''), '',
-      del ? '🚚 Entrega para ' + f.rn : '🏪 Retirada na loja', del ? '📍 ' + end : '', '👤 ' + f.name + ' · ' + f.phone];
-    if (f.note) L.push('💌 Cartão: "' + f.note + '"');
-    L.push('', '🌸 Período escolhido acima. Aguardo a confirmação da equipe.');
-    return 'https://wa.me/' + waNum() + '?text=' + encodeURIComponent(L.filter((x, i, a) => x !== '' || (a[i - 1] !== '' && i > 0)).join('\n'));
+    const f = S.f, del = isDel();
+    const [period, date] = (f.period || '').split('|');
+    const dateLabel = /^\d{4}-\d{2}-\d{2}$/.test(date || '') ? date.slice(8) + '/' + date.slice(5, 7) + '/' + date.slice(0, 4) : '';
+    const periodLabel = period === 'manha' ? 'Manhã — das 08h às 12h' : period === 'tarde' ? 'Tarde — das 12h às 20h' : '';
+    const L = ['🌷 *NOVO PEDIDO — SANTARÉM FLORES*', '',
+      '🛍️ *PRODUTOS*',
+      ...cart.map(x => '• ' + x.qty + 'x ' + x.name + ' — ' + BRL.format((x.price || 0) * x.qty)),
+      '', '💰 *TOTAL: ' + BRL.format(total()) + '*', '',
+      '👤 *QUEM FEZ O PEDIDO*', 'Nome: ' + f.name, 'WhatsApp: ' + f.phone];
+    if (del) {
+      const recipientName = f.selfReceive ? f.name : f.rn;
+      const recipientPhone = f.selfReceive ? f.phone : f.rt;
+      if (recipientName || recipientPhone) {
+        L.push('', '🎁 *QUEM VAI RECEBER*');
+        if (recipientName) L.push('Nome: ' + recipientName);
+        if (recipientPhone) L.push('Telefone: ' + recipientPhone);
+      }
+    }
+    L.push('', del ? '🛵 *ENTREGA*' : '🏪 *RETIRADA NA LOJA*');
+    if (dateLabel) L.push('Data: ' + dateLabel);
+    if (periodLabel) L.push('Período: ' + periodLabel);
+    if (del) {
+      L.push('', 'Endereço: ' + f.ru + ', ' + f.nu);
+      if (f.comp) L.push('Complemento: ' + f.comp);
+      L.push('Bairro: ' + f.ba, 'Cidade: ' + (f.ci || 'Santarém'));
+      if (f.ref) L.push('Referência: ' + f.ref);
+    }
+    L.push('', '💳 *FORMA DE PAGAMENTO*', f.payment);
+    if (del && f.anon) L.push('', '🔒 Entregar de forma anônima.');
+    if (f.note && f.note.trim()) L.push('', '💌 *CARTÃO COM MENSAGEM*', '(escrever exatamente como abaixo)', '', '────────────────', f.note, '────────────────');
+    return 'https://wa.me/' + waNum() + '?text=' + encodeURIComponent(L.join('\n'));
   }
   async function send(m, btn) {
     const f = S.f, del = isDel(), addr = f.ru ? f.ru + ', ' + f.nu + (f.comp ? ' ' + f.comp : '') + ' - ' + f.ba + ', ' + (f.ci || 'Santarém') + (f.ref ? ' (' + f.ref + ')' : '') : '';
