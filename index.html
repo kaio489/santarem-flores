@@ -2656,11 +2656,10 @@ window.SF_SEED_PRODUCTS = [];
   const savedProfile=readSaved(PROFILE_KEY,30*86400000),savedDraft=readSaved(DRAFT_KEY,86400000);
   if(savedProfile?.f)S.f={...S.f,...savedProfile.f};
   if(savedDraft?.f){S.f={...S.f,...savedDraft.f};S.lead=savedDraft.lead||0;S.requestId=savedDraft.requestId||null;S.leadSignature=savedDraft.leadSignature;}
-  if(S.f.recipientChoiceVersion!==1){S.f.selfReceive=false;S.f.rn='';S.f.rt='';}
   function persistCheckout(){clearTimeout(draftTimer);try{localStorage.setItem(DRAFT_KEY,JSON.stringify({savedAt:Date.now(),f:S.f,lead:S.lead,requestId:S.requestId,leadSignature:S.leadSignature}));}catch(_){}}
   function checkpoint(){if(S.step==='data')collect();persistCheckout();}
   function rememberCustomer(){
-    const f={ci:'Santarém',selfReceive:false};for(const key of ['name','phone','mode','ru','nu','ba','comp','ref','payment'])if(S.f[key])f[key]=S.f[key];
+    const f={ci:'Santarém'};for(const key of ['name','phone','mode','ru','nu','ba','comp','ref','payment'])if(S.f[key])f[key]=S.f[key];
     try{localStorage.setItem(PROFILE_KEY,JSON.stringify({savedAt:Date.now(),f}));localStorage.removeItem(DRAFT_KEY);}catch(_){}return f;
   }
   inner.addEventListener('input',()=>{clearTimeout(draftTimer);draftTimer=setTimeout(checkpoint,150);});
@@ -2738,12 +2737,11 @@ window.SF_SEED_PRODUCTS = [];
   }
   function rData() {
     const f=S.f,v=k=>esc(f[k]||'');f.ci='Santarém';if(!['Pix','Cartão'].includes(f.payment))f.payment='';
-    if(f.selfReceive===undefined)f.selfReceive=false;
     const body=`
       <fieldset class="oc__tp"><legend>Como você quer receber? *</legend><label><input type="radio" name="mode" value="delivery" ${isDel()?'checked':''}><span>Entrega <small>+ ${BRL.format(FEE)}</small></span></label><label><input type="radio" name="mode" value="pickup" ${f.mode==='pickup'?'checked':''}><span>Retirada <small>Sem taxa</small></span></label></fieldset>
       <div class="oc__2"><label class="oc__fl"><span>Nome *</span><input name="name" type="text" autocomplete="name" maxlength="80" placeholder="Seu nome" value="${v('name')}"></label><label class="oc__fl"><span>Telefone *</span><input name="phone" type="tel" autocomplete="tel" maxlength="20" placeholder="(93) 9…" value="${v('phone')}"></label></div>
-      ${isDel()?`<label class="oc__ck"><input type="checkbox" name="selfReceive" ${f.selfReceive?'checked':''}> Eu mesmo vou receber</label>
-      <div class="oc__2 oc__recipient-fields" id="oc-recipient" ${f.selfReceive?'hidden':''}><strong class="oc__recipient-title">Dados de quem vai receber</strong><label class="oc__fl"><span>Nome de quem vai receber *</span><input name="rn" type="text" autocomplete="section-recipient name" maxlength="80" placeholder="Nome" value="${v('rn')}"></label><label class="oc__fl"><span>Telefone de quem recebe *</span><input name="rt" type="tel" autocomplete="section-recipient tel" maxlength="20" placeholder="(93) 9…" value="${v('rt')}"></label></div>
+      ${isDel()?`
+      <div class="oc__2 oc__recipient-fields" id="oc-recipient"><strong class="oc__recipient-title">Dados de quem vai receber</strong><label class="oc__fl"><span>Nome de quem vai receber *</span><input name="rn" type="text" autocomplete="section-recipient name" maxlength="80" placeholder="Nome" value="${v('rn')}"></label><label class="oc__fl"><span>Telefone de quem recebe *</span><input name="rt" type="tel" autocomplete="section-recipient tel" maxlength="20" placeholder="(93) 9…" value="${v('rt')}"></label></div>
       <label class="oc__fl"><span>Rua / Avenida *</span><input name="ru" type="text" autocomplete="address-line1" maxlength="80" placeholder="Nome da rua ou avenida" value="${v('ru')}"></label>
       <div class="oc__2"><label class="oc__fl"><span>Número *</span><input name="nu" type="text" maxlength="12" placeholder="123 ou S/N" value="${v('nu')}"></label><label class="oc__fl"><span>Complemento</span><input name="comp" type="text" autocomplete="address-line2" maxlength="40" placeholder="Apto, bloco…" value="${v('comp')}"></label></div>
       <div class="oc__2"><label class="oc__fl"><span>Bairro *</span><input name="ba" type="text" autocomplete="address-level3" maxlength="60" placeholder="Seu bairro" value="${v('ba')}"></label><label class="oc__fl"><span>Cidade</span><input name="ci" type="text" value="Santarém" readonly aria-label="Cidade: Santarém"></label></div>`:''}
@@ -2753,21 +2751,6 @@ window.SF_SEED_PRODUCTS = [];
     shell('Seus dados','Preencha os dados e confira o resumo.',body,'<div class="oc__fr"><button class="oc__back" type="button" data-act="tcart">← Voltar</button><button class="oc__go" type="button" data-act="tpay">Ver resumo do pedido →</button></div>');
     inner.querySelector('.oc').classList.add('oc--compact','oc--unified');refreshScheduleMin();
   }
-
-  function syncRecipient() {
-    const on = !!S.f.selfReceive;
-    const box = $('#oc-recipient'), note = $('#oc-self-note');
-    if (box) box.hidden = on;
-    if (note) note.hidden = !on;
-    if (on) {
-      const name = inner.querySelector('[name="name"]'), phone = inner.querySelector('[name="phone"]');
-      S.f.rn = name ? name.value.trim() : S.f.name || '';
-      S.f.rt = phone ? phone.value.trim() : S.f.phone || '';
-      const rn = inner.querySelector('[name="rn"]'), rt = inner.querySelector('[name="rt"]');
-      if (rn) rn.value = S.f.rn; if (rt) rt.value = S.f.rt;
-    }
-  }
-
 
   function rPay() {
     const del = isDel();
@@ -2785,7 +2768,6 @@ window.SF_SEED_PRODUCTS = [];
   /* ---------- lógica ---------- */
   function collect() {
     inner.querySelectorAll('input[name], textarea[name]').forEach((el) => { if (el.type === 'radio') { if (el.checked) S.f[el.name] = el.value; } else if (el.type === 'checkbox') S.f[el.name] = el.checked; else S.f[el.name] = el.value.trim(); });
-    if (S.f.selfReceive) { S.f.rn = S.f.name; S.f.rt = S.f.phone; }
     const slot=schedulePayload();S.f.d=slot.d||'';S.f.dz=slot.dz||'';
   }
   function validate(contactOnly = false) {
@@ -2832,8 +2814,8 @@ window.SF_SEED_PRODUCTS = [];
       '',
       '👤 *QUEM FEZ O PEDIDO*', '*NOME:* ' + f.name, 'WhatsApp: ' + f.phone];
     if (del) {
-      const recipientName = f.selfReceive ? f.name : f.rn;
-      const recipientPhone = f.selfReceive ? f.phone : f.rt;
+      const recipientName = f.rn;
+      const recipientPhone = f.rt;
       if (recipientName || recipientPhone) {
         L.push('', '🎁 *QUEM VAI RECEBER*');
         if (recipientName) L.push('*NOME:* ' + recipientName);
@@ -2873,7 +2855,6 @@ window.SF_SEED_PRODUCTS = [];
   inner.addEventListener('input', (e) => {
     const b = e.target.closest('.oc__bad'); if (b) b.classList.remove('oc__bad');
     e.target.removeAttribute('aria-invalid'); e.target.removeAttribute('aria-describedby');
-    if (S.f.selfReceive && ['name','phone'].includes(e.target.name)) syncRecipient();
     if (!inner.querySelector('.oc__bad')) err('');
   });
   inner.addEventListener('change', (e) => {
@@ -2881,13 +2862,7 @@ window.SF_SEED_PRODUCTS = [];
     e.target.removeAttribute('aria-invalid');
     if (e.target.name === 'mode') { collect();S.f.mode=e.target.value;rData();persistCheckout();return; }
     if(e.target.name==='period'){collect();persistCheckout();}
-    if (e.target.name === 'selfReceive') {
-      const rn = inner.querySelector('[name="rn"]'), rt = inner.querySelector('[name="rt"]');
-      if (e.target.checked) S.recipientBackup = { rn: rn?.value||'', rt: rt?.value||'' };
-      S.f.selfReceive = e.target.checked; S.f.recipientChoiceVersion=1;
-      if (!e.target.checked) { const saved = S.recipientBackup || { rn: '', rt: '' }; rn.value = saved.rn; rt.value = saved.rt; S.f.rn = saved.rn; S.f.rt = saved.rt; }
-      syncRecipient();
-    }
+
   });
   inner.addEventListener('click', (e) => {
     const a = e.target.closest('[data-act]'); if (!a) return; const act = a.dataset.act, i = +a.dataset.i;
