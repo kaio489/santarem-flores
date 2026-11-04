@@ -1568,6 +1568,15 @@ html body #order .oc--unified .oc__payment p{margin-top:5px}
 .oc__recipient-fields .oc__fl input:focus{outline:2px solid var(--yellow);outline-offset:2px;}
 @media(max-width:480px){.oc__recipient-fields{grid-template-columns:minmax(0,1fr);padding:12px;}}
 </style>
+<style>
+html body #order .oc--unified .oc__recipient-fields{padding:8px 10px;gap:6px;grid-template-columns:minmax(0,1fr) minmax(0,1fr);margin:2px 0 6px;border-radius:10px;}
+html body #order .oc--unified .oc__recipient-title{font-size:12px;line-height:1.25;}
+html body #order .oc--unified .oc__recipient-fields .oc__fl>span{font-size:11px;line-height:1.3;}
+html body #order .oc--unified .oc__recipient-fields input{min-height:40px;padding:8px;font-size:16px;}
+html body #order .oc__schedule-date input{min-width:0;width:100%;max-width:100%;box-sizing:border-box;display:block;-webkit-appearance:none;}
+html body #order .oc__card-message textarea{height:90px;min-height:90px;resize:vertical;max-height:none;}
+html body #order .oc__period:has(input:disabled){opacity:.5;}
+</style>
 </head>
 <body>
 <style>
@@ -2704,23 +2713,19 @@ window.SF_SEED_PRODUCTS = [];
   }
   function periodWindow(period,date,base=Date.now()) {
     if(!['manha','tarde'].includes(period)||!/^\d{4}-\d{2}-\d{2}$/.test(date||''))return null;
-    const day=new Date(date+'T12:00:00-03:00').getUTCDay();if(!day)return null;
-    const open=period==='manha'?'08:00':'12:00';
-    const close=period==='manha'?'12:00':'20:00';
+    
+    const open=period==='manha'?'08:00':'13:00';
+    const close=period==='manha'?'12:00':'21:00';
     const start=Date.parse(date+'T'+open+':00-03:00'),end=Date.parse(date+'T'+close+':00-03:00');
     if(!Number.isFinite(start)||!Number.isFinite(end)||end<=base||shopParts(start).date!==date)return null;
     return {period,date,start,end,from:shopParts(start).time,to:close,key:period+'|'+date};
   }
-  function nextPeriod(period) {
-    const today=shopParts(Date.now()).date;
-    for(let i=0;i<10;i++){const date=new Date(Date.parse(today+'T12:00:00-03:00')+i*86400000).toISOString().slice(0,10),slot=periodWindow(period,date);if(slot)return slot;}
-    return null;
-  }
+  function nextPeriod(period) {return periodWindow(period,S.f.deliveryDate||shopParts(Date.now()).date);}
   function selectedPeriod() {const [period,date]=(S.f.period||'').split('|');return periodWindow(period,date);}
   function periodDay(date) {
     const today=shopParts(Date.now()).date,tomorrow=shopParts(Date.now()+86400000).date;
     const day=date===today?'Hoje':date===tomorrow?'Amanhã':new Date(date+'T12:00:00-03:00').toLocaleDateString('pt-BR',{timeZone:SHOP_ZONE,weekday:'short'}).replace('.','');
-    return day+' · '+date.slice(8)+'/'+date.slice(5,7);
+    return day+' · '+date.slice(8)+'/'+date.slice(5,7)+'/'+date.slice(0,4);
   }
   function periodHours(slot) {return slot.from.replace(':','h')+'–'+slot.to.replace(':','h');}
   function appointmentLabel() {const s=selectedPeriod();return s?(s.period==='manha'?'Manhã':'Tarde')+' · '+periodDay(s.date)+' · '+periodHours(s):'';}
@@ -2729,14 +2734,15 @@ window.SF_SEED_PRODUCTS = [];
   }
   function refreshScheduleMin() {}
   function periodFields() {
-    return `<fieldset class="oc__periods"><legend>Período ${isDel()?'da entrega':S.f.mode==='pickup'?'da retirada':'do recebimento'} *</legend><div class="oc__period-grid">${['manha','tarde'].map(period=>{const s=nextPeriod(period);return s?`<label class="oc__period"><input name="period" type="radio" value="${s.key}" ${S.f.period===s.key?'checked':''} required aria-describedby="oc-period-help"><span><b>${period==='manha'?'Manhã':'Tarde'}</b><small>${periodDay(s.date)}</small><em>${periodHours(s)}</em></span></label>`:'';}).join('')}</div></fieldset><p class="oc__schedule-help" id="oc-period-help">Segunda a sábado: <strong>manhã, 08h às 12h</strong>; <strong>tarde, 12h às 20h</strong>. O período de hoje fica disponível até encerrar. Horário de Santarém.</p>`;
+    return `<label class="oc__fl oc__schedule-date"><span>Data ${isDel()?'da entrega':'da retirada'} *</span><input name="deliveryDate" type="date" min="${shopParts(Date.now()).date}" value="${esc(S.f.deliveryDate||'')}" required></label><fieldset class="oc__periods"><legend>Período ${isDel()?'da entrega':'da retirada'} *</legend><div class="oc__period-grid">${['manha','tarde'].map(period=>{const slot=nextPeriod(period);return `<label class="oc__period"><input name="period" type="radio" value="${period+'|'+S.f.deliveryDate}" ${slot&&S.f.period===slot.key?'checked':''} ${slot?'':'disabled'} required aria-describedby="oc-period-help"><span><b>${period==='manha'?'Manhã':'Tarde'}</b><em>${period==='manha'?'08h–12h':'13h–21h'}</em><small>${slot?'Disponível':'Indisponível'}</small></span></label>`;}).join('')}</div></fieldset><p class="oc__schedule-help" id="oc-period-help">Escolha qualquer data a partir de hoje. Manhã: 08h às 12h. Tarde: 13h às 21h. Horário de Santarém.</p>`;
   }
-  const messageFields = v => `<details class="oc__optional" ${S.f.note || S.f.comp || S.f.ref || S.f.anon ? 'open' : ''}><summary>Cartão e detalhes opcionais <span>+</span></summary><div class="oc__optional-body">${isDel()?`<div class="oc__2"><label class="oc__fl"><span>Complemento</span><input name="comp" type="text" autocomplete="address-line2" maxlength="40" value="${v('comp')}" placeholder="Apto, bloco…"></label><label class="oc__fl"><span>Referência</span><input name="ref" type="text" maxlength="80" value="${v('ref')}" placeholder="Próximo a…"></label></div>`:''}<label class="oc__fl"><span>Mensagem do cartão</span><textarea name="note" rows="2" maxlength="180" placeholder="Escreva sua mensagem…">${v('note')}</textarea></label>${isDel()?`<label class="oc__ck"><input type="checkbox" name="anon" ${S.f.anon?'checked':''}> Enviar de forma anônima</label>`:''}</div></details>`;
   function paymentFields() {
     return `<fieldset class="oc__payment"><legend>Como pretende pagar? *</legend><div class="oc__payment-grid">${['Pix','Cartão'].map(method=>`<label><input type="radio" name="payment" value="${method}" ${S.f.payment===method?'checked':''} required aria-describedby="oc-payment-help"><span>${method}</span></label>`).join('')}</div><p id="oc-payment-help">O pagamento será confirmado pela equipe.</p></fieldset>`;
   }
   function rData() {
     const f=S.f,v=k=>esc(f[k]||'');f.ci='Santarém';if(!['Pix','Cartão'].includes(f.payment))f.payment='';
+    if(!f.deliveryDate)f.deliveryDate=(f.period||'').split('|')[1]||shopParts(Date.now()).date;
+    if(f.period&&(f.period.split('|')[1]!==f.deliveryDate||!selectedPeriod()))f.period='';
     const body=`
       <fieldset class="oc__tp"><legend>Como você quer receber? *</legend><label><input type="radio" name="mode" value="delivery" ${isDel()?'checked':''}><span>Entrega <small>+ ${BRL.format(FEE)}</small></span></label><label><input type="radio" name="mode" value="pickup" ${f.mode==='pickup'?'checked':''}><span>Retirada <small>Sem taxa</small></span></label></fieldset>
       <div class="oc__2"><label class="oc__fl"><span>Nome *</span><input name="name" type="text" autocomplete="name" maxlength="80" placeholder="Seu nome" value="${v('name')}"></label><label class="oc__fl"><span>Telefone *</span><input name="phone" type="tel" autocomplete="tel" maxlength="20" placeholder="(93) 9…" value="${v('phone')}"></label></div>
@@ -2744,10 +2750,12 @@ window.SF_SEED_PRODUCTS = [];
       <div class="oc__2 oc__recipient-fields" id="oc-recipient"><strong class="oc__recipient-title">Dados de quem vai receber</strong><label class="oc__fl"><span>Nome de quem vai receber *</span><input name="rn" type="text" autocomplete="section-recipient name" maxlength="80" placeholder="Nome" value="${v('rn')}"></label><label class="oc__fl"><span>Telefone de quem recebe *</span><input name="rt" type="tel" autocomplete="section-recipient tel" maxlength="20" placeholder="(93) 9…" value="${v('rt')}"></label></div>
       <label class="oc__fl"><span>Rua / Avenida *</span><input name="ru" type="text" autocomplete="address-line1" maxlength="80" placeholder="Nome da rua ou avenida" value="${v('ru')}"></label>
       <div class="oc__2"><label class="oc__fl"><span>Número *</span><input name="nu" type="text" maxlength="12" placeholder="123 ou S/N" value="${v('nu')}"></label><label class="oc__fl"><span>Complemento</span><input name="comp" type="text" autocomplete="address-line2" maxlength="40" placeholder="Apto, bloco…" value="${v('comp')}"></label></div>
-      <div class="oc__2"><label class="oc__fl"><span>Bairro *</span><input name="ba" type="text" autocomplete="address-level3" maxlength="60" placeholder="Seu bairro" value="${v('ba')}"></label><label class="oc__fl"><span>Cidade</span><input name="ci" type="text" value="Santarém" readonly aria-label="Cidade: Santarém"></label></div>`:''}
+      <div class="oc__2"><label class="oc__fl"><span>Bairro *</span><input name="ba" type="text" autocomplete="address-level3" maxlength="60" placeholder="Seu bairro" value="${v('ba')}"></label><label class="oc__fl"><span>Cidade</span><input name="ci" type="text" value="Santarém" readonly aria-label="Cidade: Santarém"></label></div>
+      <label class="oc__fl"><span>Ponto de referência (opcional)</span><input name="ref" type="text" maxlength="80" placeholder="Próximo a…" value="${v('ref')}"></label>
+      <label class="oc__ck"><input type="checkbox" name="anon" ${f.anon?'checked':''}> Enviar de forma anônima</label>`:''}
       ${periodFields()}
       ${paymentFields()}
-      <section class="oc__optional oc__optional--visible" aria-label="Referência e mensagem do presente"><p class="oc__optional-title">Referência e mensagem do presente (opcional)</p><div class="oc__optional-body">${isDel()?`<label class="oc__fl"><span>Referência</span><input name="ref" type="text" maxlength="80" placeholder="Ponto de referência" value="${v('ref')}"></label>`:''}<label class="oc__fl"><span>Mensagem do cartão</span><textarea name="note" rows="2" maxlength="180" placeholder="Ex.: Feliz aniversário!">${v('note')}</textarea></label>${isDel()?`<label class="oc__ck"><input type="checkbox" name="anon" ${f.anon?'checked':''}> Enviar de forma anônima</label>`:''}</div></section>`;
+      <section class="oc__optional oc__optional--visible oc__card-message" aria-label="Mensagem do cartão"><label class="oc__fl"><span>Mensagem do cartão (opcional)</span><textarea name="note" rows="3" placeholder="Escreva sua mensagem para o cartão…">${v('note')}</textarea></label></section>`;
     shell('Seus dados','Preencha os dados e confira o resumo.',body,'<div class="oc__fr"><button class="oc__back" type="button" data-act="tcart">← Voltar</button><button class="oc__go" type="button" data-act="tpay">Ver resumo do pedido →</button></div>');
     inner.querySelector('.oc').classList.add('oc--compact','oc--unified');refreshScheduleMin();
   }
@@ -2767,7 +2775,7 @@ window.SF_SEED_PRODUCTS = [];
 
   /* ---------- lógica ---------- */
   function collect() {
-    inner.querySelectorAll('input[name], textarea[name]').forEach((el) => { if (el.type === 'radio') { if (el.checked) S.f[el.name] = el.value; } else if (el.type === 'checkbox') S.f[el.name] = el.checked; else S.f[el.name] = el.value.trim(); });
+    inner.querySelectorAll('input[name], textarea[name]').forEach((el) => { if (el.type === 'radio') { if (el.checked) S.f[el.name] = el.value; } else if (el.type === 'checkbox') S.f[el.name] = el.checked; else S.f[el.name] = el.name==='note'?el.value:el.value.trim(); });
     const slot=schedulePayload();S.f.d=slot.d||'';S.f.dz=slot.dz||'';
   }
   function validate(contactOnly = false) {
@@ -2779,7 +2787,7 @@ window.SF_SEED_PRODUCTS = [];
       if (!f.rn) bad.push('rn'); if (d(f.rt) < 10) bad.push('rt'); if (!f.ru) bad.push('ru'); if (!f.nu) bad.push('nu'); if (!f.ba) bad.push('ba');
       if (!/^santar[eé]m$/i.test(f.ci || '')) { bad.push('ci'); msg = 'No momento entregamos apenas na área urbana de Santarém (taxa fixa de R$ 20,00).'; }
     }
-    if(!f.period||!selectedPeriod()){bad.push('period');msg=f.period?'Este período não está mais disponível. Escolha novamente.':'Escolha Manhã ou Tarde para continuar.';}
+    if(!f.period||!selectedPeriod()){bad.push('period');bad.push('deliveryDate');msg=f.period?'Este período não está mais disponível. Escolha novamente.':'Escolha Manhã ou Tarde para continuar.';}
     if(!contactOnly&&!['Pix','Cartão'].includes(f.payment)){bad.push('payment');if(!msg)msg='Escolha Pix ou Cartão para continuar.';}
     return { bad, msg: msg || (bad.length ? 'Confira os campos destacados para continuar.' : '') };
   }
@@ -2807,7 +2815,7 @@ window.SF_SEED_PRODUCTS = [];
     const f = S.f, del = isDel();
     const [period, date] = (f.period || '').split('|');
     const dateLabel = /^\d{4}-\d{2}-\d{2}$/.test(date || '') ? date.slice(8) + '/' + date.slice(5, 7) + '/' + date.slice(0, 4) : '';
-    const periodLabel = period === 'manha' ? 'Manhã — das 08h às 12h' : period === 'tarde' ? 'Tarde — das 12h às 20h' : '';
+    const periodLabel = period === 'manha' ? 'Manhã — das 08h às 12h' : period === 'tarde' ? 'Tarde — das 13h às 21h' : '';
     const L = ['🌷 *NOVO PEDIDO — SANTARÉM FLORES*', '',
       '🛍️ *PRODUTOS*',
       ...cart.map(x => '• ' + x.qty + 'x ' + x.name + ' — ' + BRL.format((x.price || 0) * x.qty)),
@@ -2861,6 +2869,7 @@ window.SF_SEED_PRODUCTS = [];
     const b = e.target.closest('.oc__bad'); if (b) b.classList.remove('oc__bad');
     e.target.removeAttribute('aria-invalid');
     if (e.target.name === 'mode') { collect();S.f.mode=e.target.value;rData();persistCheckout();return; }
+    if(e.target.name==='deliveryDate'){collect();S.f.deliveryDate=e.target.value;S.f.period='';rData();persistCheckout();return;}
     if(e.target.name==='period'){collect();persistCheckout();}
 
   });
